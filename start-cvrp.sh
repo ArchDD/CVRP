@@ -1,3 +1,3 @@
 #!/bin/tcsh
-javac *.java
-java CVRP
+g++ -o cvrp cvrp.cpp
+./cvrp
