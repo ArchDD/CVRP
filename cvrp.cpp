@@ -1,23 +1,9 @@
-#include <cstdio>
-#include <iostream>
+#include "cvrp.hpp"
+#include "SimpleGA.cpp"
 
 using namespace std;
 
-class SimpleGA
-{
-private:
-public:
-	SimpleGA()
-	{
-
-	};
-
-	void run()
-	{
-		printf("Starting simple genetic algorithm\n");
-		printf("Ending simple genetic algorithm\n");
-	};
-};
+unsigned int iterations = 5;
 
 int main()
 {
