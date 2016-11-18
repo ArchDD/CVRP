@@ -3,8 +3,25 @@
 
 using namespace std;
 
+class SimpleGA
+{
+private:
+public:
+	SimpleGA()
+	{
+
+	};
+
+	void run()
+	{
+		printf("Starting simple genetic algorithm\n");
+		printf("Ending simple genetic algorithm\n");
+	};
+};
+
 int main()
 {
-	printf("abc\n");
+	SimpleGA* simpleGA = new SimpleGA();
+	simpleGA->run();
 	return 0;
 }
