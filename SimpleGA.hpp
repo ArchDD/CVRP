@@ -1,5 +1,9 @@
 #pragma once
 
+#include <cstdio>
+#include <iostream>
+using namespace std;
+
 class SimpleGA
 {
 private:
@@ -17,6 +21,6 @@ public:
 	void stepGA();
 
 	void writeResult();
-	
+
 	void run();
 };

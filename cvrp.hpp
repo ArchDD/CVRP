@@ -2,7 +2,7 @@
 
 #include <cstdio>
 #include <iostream>
-#include "SimpleGA.cpp"
+#include "SimpleGA.hpp"
 using namespace std;
 
 int main();

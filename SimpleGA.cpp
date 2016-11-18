@@ -1,56 +1,51 @@
-#pragma once
+#include "SimpleGA.hpp"
 
-class SimpleGA
+SimpleGA::SimpleGA()
 {
-private:
-public:
-	SimpleGA()
-	{
 
-	}
-
-	void generatePopulation()
-	{
-
-	}
-
-	void evaluatePopulation()
-	{
-
-	}
-
-	void selectParents()
-	{
-
-	}
-
-	void replacePopulation()
-	{
-
-	}
-
-	void stepGA()
-	{
-		// Evaluate population
-		// Select parents
-		// Reproduce using genetic operators
-		// Replace population with offspring
-	}
-
-	void writeResult()
-	{
-
-	}
-
-	void run()
-	{
-		printf("Starting simple genetic algorithm\n");
-		// Generate initial population
-		generatePopulation();
-		// Loop
-		stepGA();
-		// End
-		writeResult();
-		printf("Ending simple genetic algorithm\n");
-	}
 };
+
+void SimpleGA::generatePopulation()
+{
+
+};
+
+void SimpleGA::evaluatePopulation()
+{
+
+}
+
+void SimpleGA::selectParents()
+{
+
+}
+
+void SimpleGA::replacePopulation()
+{
+
+}
+
+void SimpleGA::stepGA()
+{
+	// Evaluate population
+	// Select parents
+	// Reproduce using genetic operators
+	// Replace population with offspring
+}
+
+void SimpleGA::writeResult()
+{
+
+}
+
+void SimpleGA::run()
+{
+	printf("Starting simple genetic algorithm\n");
+	// Generate initial population
+	generatePopulation();
+	// Loop
+	stepGA();
+	// End
+	writeResult();
+	printf("Ending simple genetic algorithm\n");
+}
