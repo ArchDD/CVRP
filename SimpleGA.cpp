@@ -1,4 +1,7 @@
 #include "SimpleGA.hpp"
+#include <cstdio>
+#include <iostream>
+using namespace std;
 
 SimpleGA::SimpleGA()
 {
