@@ -11,11 +11,8 @@
 using namespace std;
 
 vector<Node*> nodes;
-unsigned int dimension;
-unsigned int capacity;
-unsigned int iterations = 5;
-unsigned int trucks = 1;
-unsigned int cost = 0;
+int dimension;
+int capacity;
 vector<Chromosome*> population;
 
 int readInputFile(string fileName)

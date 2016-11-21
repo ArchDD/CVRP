@@ -174,7 +174,6 @@ void SimpleGA::writeResult()
 		string s = "";
 		for (int j = 0; j < bestSolution->genes[i]->route.size(); j++)
 		{
-			//printf("%d\n", j);
 			convert << (bestSolution->genes[i]->route[j]+1);
 			n = convert.str();
 			convert.str("");
@@ -231,7 +230,6 @@ void SimpleGA::pmx(Chromosome* p1, Chromosome* p2)
 
 void SimpleGA::swapGenes(int pos, Chromosome* p1, Chromosome* p2, Chromosome* chromosome)
 {
-	//printf("Entering swap\n");
 	int g1, g2;
 	int i1, i2, i3, i4, j1, j2, j3, j4;
 	int c = 0;
@@ -316,18 +314,9 @@ Chromosome* SimpleGA::swapMutation(Chromosome* ch)
 	if (mutation->genes[i1]->load <= capacity && mutation->genes[i2]->load <= capacity)
 	{
 		ch->free();
-		//mutation->evaluateFitness();
-		//printf("load1 %d load 2 %d capacity %d\n", mutation->genes[i1]->load, mutation->genes[i2]->load, capacity);
-		/*if (mutation->genes[i1]->load > capacity)
-			printf("dsaidasj\n");
-		if (mutation->genes[i2]->load > capacity)
-			printf("huihi\n");*/
+		mutation->evaluateFitness();
 		return mutation;
 	}
-	/*if (ch->genes[i1]->load > capacity)
-		printf("dsaidasj\n");
-	if (ch->genes[i2]->load > capacity)
-		printf("huihi\n");*/
 	mutation->free();
 	return ch;
 }

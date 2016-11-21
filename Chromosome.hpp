@@ -19,10 +19,11 @@ class Chromosome
 {
 private:
 	vector<int> customers;
-public:
+protected:
 	int dimension;
 	int capacity;
 	vector<Node*>* nodes;
+public:
 	vector<Vehicle*> genes;
 	double fitness;
 	double probability;

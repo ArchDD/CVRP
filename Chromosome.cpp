@@ -35,8 +35,6 @@ Chromosome::Chromosome(Chromosome* chromosome)
 
 void Chromosome::initialise()
 {
-	if (capacity != 500)
-			printf("capacity error\n");
 	// Create copy of customers for gene pool
 	for (int i = 0; i < nodes->size(); i++)
 		customers.push_back(i);
