@@ -6,6 +6,7 @@ using namespace std;
 class SimpleGA
 {
 private:
+	Chromosome* bestSolution;
 	vector<Chromosome*>* population;
 	vector<Node*>* nodes;
 	int dimension;

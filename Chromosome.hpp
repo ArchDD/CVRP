@@ -24,7 +24,8 @@ private:
 public:
 	vector<Vehicle*> genes;
 	int fitness;
-	float probability;
+	double probability;
+	double cost;
 
 	Chromosome(vector<Node*>* n, int d, int c);
 	void initialise();
@@ -32,4 +33,5 @@ public:
 	void appendSubroute();
 	void evaluateFitness();
 	void evaluateProbability();
+	void evaluateLoad(Vehicle* vehicle);
 };

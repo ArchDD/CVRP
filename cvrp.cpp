@@ -18,6 +18,10 @@ vector<Chromosome*> population;
 
 int readInputFile(string fileName)
 {
+	//Node* padding = new Node();
+	//nodes.push_back(padding);
+	//nodes.push_back(padding);
+
 	ifstream f(fileName.c_str());
 	if (f.is_open())
 	{
