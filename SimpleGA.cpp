@@ -36,6 +36,8 @@ void SimpleGA::evaluatePopulation()
 	for (int i = 0; i < samples; i++)
 	{
 		(*population)[i]->evaluateFitness();
+		for (int j = 0; j < (*population)[i]->genes.size(); j++)
+			(*population)[i]->evaluateLoad( (*population)[i]->genes[j] );
 	}
 
 	double totalFitness = 0.0;
@@ -118,9 +120,9 @@ void SimpleGA::replacePopulation()
 		offsprings.pop_back();
 
 		// Mutate if not best solution
-		double p = (double)rand() / RAND_MAX;
+		/*double p = (double)rand() / RAND_MAX;
 		if (p < mutationProbability && population->back() != bestSolution)
-			population->back() = swapMutation(population->back());
+			population->back() = swapMutation(population->back());*/
 	}
 }
 
@@ -161,14 +163,14 @@ void SimpleGA::stepGA()
 
 	clock_t t1 = clock(), t2 = clock(), t3 = clock();
 	float f = 0.0f;
-	int i = 0, batch = 100;
-	float timeLimit = 1.0f * 20.0f, batchTime = 0.0f;
+	int i = 0, batch = 10;
+	float timeLimit = 1.0f * 10.0f, batchTime = 0.0f;
 
 	while (f < timeLimit)
 	{
 		reproduceOffspring();
-		evaluatePopulation();
 		replacePopulation();
+		evaluatePopulation();
 		evaluateSolution();
 
 		if (i % batch == 0)
@@ -261,8 +263,21 @@ void SimpleGA::pmx(Chromosome* p1, Chromosome* p2)
 		swapGenes(i, p1, p2, b1);
 		swapGenes(i, p1, p2, b2);
 	}
-	offsprings.push_back(b1);
-	offsprings.push_back(b2);
+
+	// Push only evaluated load is acceptable
+	bool acceptable = true;
+	for (int i = 0; i < b1->genes.size(); i++)
+		if (b1->genes[i]->load > capacity)
+			acceptable = false;
+	if (acceptable)
+		offsprings.push_back(b1);
+
+	acceptable = true;
+	for (int i = 0; i < b2->genes.size(); i++)
+		if (b2->genes[i]->load > capacity)
+			acceptable = false;
+	if (acceptable)
+		offsprings.push_back(b2);
 }
 
 void SimpleGA::swapGenes(int pos, Chromosome* p1, Chromosome* p2, Chromosome* chromosome)
@@ -329,6 +344,10 @@ void SimpleGA::swapGenes(int pos, Chromosome* p1, Chromosome* p2, Chromosome* ch
 	int tmp = chromosome->genes[i3]->route[j3];
 	chromosome->genes[i3]->route[j3] = chromosome->genes[i4]->route[j4];
 	chromosome->genes[i4]->route[j4] = tmp;
+
+	//Evaluate new load
+	chromosome->evaluateLoad(chromosome->genes[i3]);
+	chromosome->evaluateLoad(chromosome->genes[i4]);
 }
 
 // MUTATIONS
@@ -351,7 +370,6 @@ Chromosome* SimpleGA::swapMutation(Chromosome* ch)
 	if (mutation->genes[i1]->load <= capacity && mutation->genes[i2]->load <= capacity)
 	{
 		ch->free();
-		mutation->evaluateFitness();
 		return mutation;
 	}
 	mutation->free();
