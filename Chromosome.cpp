@@ -20,6 +20,9 @@ Chromosome::Chromosome(Chromosome* chromosome)
 	nodes = chromosome->nodes;
 	dimension = chromosome->dimension;
 	capacity = chromosome->capacity;
+	fitness = chromosome->fitness;
+	probability = chromosome->probability;
+	cost = chromosome->cost;
 
 	for (int i = 0; i < chromosome->genes.size(); i++)
 	{
@@ -32,6 +35,7 @@ Chromosome::Chromosome(Chromosome* chromosome)
 
 void Chromosome::initialise()
 {
+	srand(time(0));
 	// Create copy of customers for gene pool
 	for (int i = 0; i < nodes->size(); i++)
 		customers.push_back(i);
@@ -41,14 +45,11 @@ void Chromosome::initialise()
 		createSubroute();
 		appendSubroute();
 	}
-
-	evaluateFitness();
 }
 
 void Chromosome::createSubroute()
 {
 	// Random integer in range 1 to customer size
-	srand(time(0));
 	int i = (rand() % (customers.size()-1)) + 1;
 	int n = customers[i];
 	Vehicle* v = new Vehicle();
@@ -66,7 +67,6 @@ void Chromosome::appendSubroute()
 	if (customers.size() == 1) return;
 
 	int i = genes.size()-1;
-	srand(time(0));
 	int j = (rand() % (customers.size()-1)) + 1;
 	int n = customers[j];
 
@@ -116,6 +116,7 @@ void Chromosome::evaluateFitness()
 	}
 
 	cost = c;
+	fitness = 100000.0/cost;
 }
 
 void Chromosome::evaluateLoad(Vehicle* vehicle)
@@ -129,100 +130,3 @@ void Chromosome::evaluateLoad(Vehicle* vehicle)
 	vehicle->load = load;
 	//printf("load: %d\n", load);
 }
-
-// CROSSOVERS
-// PMX crossover is a non-destructive operator
-void Chromosome::pmx(Chromosome* p1, Chromosome* p2)
-{
-	// Uniformly select crossover points
-	srand(time(0));
-	int begin = (rand() % dimension-1) + 1;
-	srand(time(0));
-	int end = (rand() % dimension-1) + 1;
-	if (begin > end)
-	{
-		int tmp = begin;
-		begin = end;
-		end = begin;
-	}
-
-	Chromosome* b1 = new Chromosome(p1);
-	Chromosome* b2 = new Chromosome(p2);
-
-	for (int i = begin; i < end; i++)
-	{
-		swapGenes(i, p1, p2, b1);
-		swapGenes(i, p1, p2, b2);
-	}
-}
-
-void Chromosome::swapGenes(int pos, Chromosome* p1, Chromosome* p2, Chromosome* chromosome)
-{
-	int g1, g2;
-	int i1, i2, i3, i4, j1, j2, j3, j4;
-	int c = 0;
-
-	// Get genes at position
-	for (int i = 0; i < p1->genes.size(); i++)
-	{
-		// Ignore depot
-		for (int j = 1; j < p1->genes[i]->route.size()-1; j++)
-		{
-			if (c < pos)
-				c++;
-			else if (c==pos)
-			{
-				g1 = p1->genes[i]->route[j];
-				i1 = i;
-				j1 = j;
-				j = p1->genes[i]->route.size()-1;
-				i = p1->genes.size();
-			}
-		}
-	}
-
-	c = 0;
-	for (int i = 0; i < p2->genes.size(); i++)
-	{
-		// Ignore depot
-		for (int j = 1; j < p2->genes[i]->route.size()-1; j++)
-		{
-			if (c < pos)
-				c++;
-			else if (c==pos)
-			{
-				g2 = p2->genes[i]->route[j];
-				i2 = i;
-				j2 = j;
-				j = p2->genes[i]->route.size()-1;
-				i = p2->genes.size();
-			}
-		}
-	}
-
-	// Swap chromosome's g1 and g2
-	for (int i = 0; i < chromosome->genes.size(); i++)
-	{
-		// Ignore depot
-		for (int j = 1; j < chromosome->genes[i]->route.size()-1; j++)
-		{
-			if (chromosome->genes[i]->route[j] == g1)
-			{
-				i3 = i;
-				j3 = j;
-			}
-			if (chromosome->genes[i]->route[j] == g2)
-			{
-				i4 = i;
-				j4 = j;
-			}
-		}
-	}
-
-	int tmp = chromosome->genes[i3]->route[j3];
-	chromosome->genes[i3]->route[j3] = chromosome->genes[i4]->route[j4];
-	chromosome->genes[i4]->route[j4] = tmp;
-}
-
-// MUTATIONS
-//

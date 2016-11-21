@@ -8,6 +8,7 @@ class SimpleGA
 private:
 	Chromosome* bestSolution;
 	vector<Chromosome*>* population;
+	vector<Chromosome*> offsprings;
 	vector<Node*>* nodes;
 	int dimension;
 	int capacity;
@@ -19,10 +20,12 @@ public:
 	void generatePopulation();
 	void evaluatePopulation();
 	void reproduceOffspring();
-
 	void replacePopulation();
 	void evaluateSolution();
 	void stepGA();
 	void writeResult();
 	void run();
+
+	void pmx(Chromosome* p1, Chromosome* p2);
+	void swapGenes(int i, Chromosome* p1, Chromosome* p2, Chromosome* chromosome);
 };

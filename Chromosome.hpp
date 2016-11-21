@@ -24,10 +24,10 @@ public:
 	int capacity;
 	vector<Node*>* nodes;
 	vector<Vehicle*> genes;
-	int fitness;
+	double fitness;
 	double probability;
 	double cost;
-
+	
 	Chromosome(vector<Node*>* n, int d, int c);
 	Chromosome(Chromosome* chromosome);
 	void initialise();
@@ -37,6 +37,4 @@ public:
 	void evaluateProbability();
 	void evaluateLoad(Vehicle* vehicle);
 
-	void pmx(Chromosome* p1, Chromosome* p2);
-	void swapGenes(int i, Chromosome* p1, Chromosome* p2, Chromosome* chromosome);
 };
