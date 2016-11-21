@@ -35,6 +35,8 @@ Chromosome::Chromosome(Chromosome* chromosome)
 
 void Chromosome::initialise()
 {
+	if (capacity != 500)
+			printf("capacity error\n");
 	// Create copy of customers for gene pool
 	for (int i = 0; i < nodes->size(); i++)
 		customers.push_back(i);
@@ -76,11 +78,6 @@ void Chromosome::appendSubroute()
 	if (genes[i]->load + (*nodes)[n]->demand > capacity)
 	{
 		createSubroute();
-
-		if (genes[i]->load > 500)
-			printf("high load\n");
-		if (capacity != 500)
-			printf("capacity error\n");
 	}
 	else
 	{
@@ -127,7 +124,7 @@ void Chromosome::evaluateFitness()
 void Chromosome::evaluateLoad(Vehicle* vehicle)
 {
 	int load = 0;
-	for (int i = 1; i < vehicle->route.size(); i++)
+	for (int i = 1; i < vehicle->route.size()-1; i++)
 	{
 		int n = vehicle->route[i];
 		load += (*nodes)[n]->demand;
