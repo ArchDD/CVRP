@@ -14,8 +14,9 @@ SimpleGA::SimpleGA(vector<Chromosome*>* p, vector<Node*>* n, int d, int c)
 	dimension = d;
 	capacity = c;
 
-	generations = 100;
+	generations = 1000;
 	samples = 100;
+	mutationProbability = 0.1;
 }
 
 void SimpleGA::generatePopulation()
@@ -114,6 +115,11 @@ void SimpleGA::replacePopulation()
 	{
 		population->push_back(offsprings.back());
 		offsprings.pop_back();
+
+		// Mutate if not best solution
+		double p = (double)rand() / RAND_MAX;
+		if (p < mutationProbability && population->back() != bestSolution)
+			population->back() = swapMutation(population->back());
 	}
 }
 
@@ -291,3 +297,38 @@ void SimpleGA::swapGenes(int pos, Chromosome* p1, Chromosome* p2, Chromosome* ch
 }
 
 // MUTATIONS
+Chromosome* SimpleGA::swapMutation(Chromosome* ch)
+{
+	// Select two random customers
+	int i1 = rand() % ch->genes.size();
+	int j1 = (rand() % (ch->genes[i1]->route.size()-2)) + 1;
+	int i2 = rand() % ch->genes.size();
+	int j2 = (rand() % (ch->genes[i2]->route.size()-2)) + 1;
+
+	// Trying to swap the customers will invert or interchange path
+	Chromosome* mutation = new Chromosome(ch);
+	int tmp = mutation->genes[i1]->route[j1];
+	mutation->genes[i1]->route[j1] = mutation->genes[i2]->route[j2];
+	mutation->genes[i2]->route[j2] = tmp;
+
+	mutation->evaluateLoad(mutation->genes[i1]);
+	mutation->evaluateLoad(mutation->genes[i2]);
+	if (mutation->genes[i1]->load <= capacity && mutation->genes[i2]->load <= capacity)
+	{
+		ch->free();
+		//mutation->evaluateFitness();
+		//printf("load1 %d load 2 %d capacity %d\n", mutation->genes[i1]->load, mutation->genes[i2]->load, capacity);
+		/*if (mutation->genes[i1]->load > capacity)
+			printf("dsaidasj\n");
+		if (mutation->genes[i2]->load > capacity)
+			printf("huihi\n");*/
+		return mutation;
+	}
+	/*if (ch->genes[i1]->load > capacity)
+		printf("dsaidasj\n");
+	if (ch->genes[i2]->load > capacity)
+		printf("huihi\n");*/
+	mutation->free();
+	return ch;
+}
+

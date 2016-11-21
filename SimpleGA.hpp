@@ -14,6 +14,7 @@ private:
 
 	int samples;
 	int generations;
+	double mutationProbability;
 
 	Chromosome* bestSolution;
 public:
@@ -29,4 +30,5 @@ public:
 
 	void pmx(Chromosome* p1, Chromosome* p2);
 	void swapGenes(int i, Chromosome* p1, Chromosome* p2, Chromosome* chromosome);
+	Chromosome* swapMutation(Chromosome* ch);
 };

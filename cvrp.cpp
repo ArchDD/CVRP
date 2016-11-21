@@ -4,8 +4,10 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <algorithm>
 #include "SimpleGA.hpp"
 #include "Chromosome.hpp"
+
 using namespace std;
 
 vector<Node*> nodes;
@@ -18,10 +20,6 @@ vector<Chromosome*> population;
 
 int readInputFile(string fileName)
 {
-	//Node* padding = new Node();
-	//nodes.push_back(padding);
-	//nodes.push_back(padding);
-
 	ifstream f(fileName.c_str());
 	if (f.is_open())
 	{
@@ -67,11 +65,13 @@ void free()
 
 int main()
 {
+	srand(time(0));
 	readInputFile("fruitybun250.vrp");
 
 	SimpleGA* simpleGA = new SimpleGA(&population, &nodes, dimension, capacity);
 	simpleGA->run();
 
+	free(simpleGA);
 	free();
 
 	return 0;
