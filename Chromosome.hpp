@@ -27,7 +27,7 @@ public:
 	double fitness;
 	double probability;
 	double cost;
-	
+
 	Chromosome(vector<Node*>* n, int d, int c);
 	Chromosome(Chromosome* chromosome);
 	void initialise();
@@ -36,5 +36,5 @@ public:
 	void evaluateFitness();
 	void evaluateProbability();
 	void evaluateLoad(Vehicle* vehicle);
-
+	void free();
 };

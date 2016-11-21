@@ -6,7 +6,6 @@ using namespace std;
 class SimpleGA
 {
 private:
-	Chromosome* bestSolution;
 	vector<Chromosome*>* population;
 	vector<Chromosome*> offsprings;
 	vector<Node*>* nodes;
@@ -15,6 +14,8 @@ private:
 
 	int samples;
 	int generations;
+
+	Chromosome* bestSolution;
 public:
 	SimpleGA(vector<Chromosome*>* p, vector<Node*>* n, int d, int c);
 	void generatePopulation();
