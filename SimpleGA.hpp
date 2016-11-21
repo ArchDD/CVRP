@@ -19,6 +19,7 @@ public:
 	void generatePopulation();
 	void evaluatePopulation();
 	void reproduceOffspring();
+
 	void replacePopulation();
 	void evaluateSolution();
 	void stepGA();
