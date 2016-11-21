@@ -11,12 +11,16 @@ private:
 	vector<Node*>* nodes;
 	int dimension;
 	int capacity;
+
+	int samples;
+	int generations;
 public:
 	SimpleGA(vector<Chromosome*>* p, vector<Node*>* n, int d, int c);
 	void generatePopulation();
 	void evaluatePopulation();
-	void selectParents();
+	void reproduceOffspring();
 	void replacePopulation();
+	void evaluateSolution();
 	void stepGA();
 	void writeResult();
 	void run();

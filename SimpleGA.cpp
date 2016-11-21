@@ -4,6 +4,7 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include <limits>
 
 SimpleGA::SimpleGA(vector<Chromosome*>* p, vector<Node*>* n, int d, int c)
 {
@@ -11,16 +12,18 @@ SimpleGA::SimpleGA(vector<Chromosome*>* p, vector<Node*>* n, int d, int c)
 	nodes = n;
 	dimension = d;
 	capacity = c;
+
+	generations = 1;
+	samples = 5000;
 }
 
 void SimpleGA::generatePopulation()
 {
 	// Chromosome constructors will create random paths
-	for (int i = 0; i < 1; i++)
+	for (int i = 0; i < samples; i++)
 	{
 		Chromosome* chromosome = new Chromosome(nodes, dimension, capacity);
 		population->push_back(chromosome);
-		bestSolution = chromosome;
 	}
 }
 
@@ -29,8 +32,9 @@ void SimpleGA::evaluatePopulation()
 	// Chromosomes have evaluateFitness method
 }
 
-void SimpleGA::selectParents()
+void SimpleGA::reproduceOffspring()
 {
+	// select parents
 	// roulette
 }
 
@@ -39,12 +43,29 @@ void SimpleGA::replacePopulation()
 
 }
 
+void SimpleGA::evaluateSolution()
+{
+	double c = numeric_limits<double>::max();
+	for (int i = 0; i < population->size(); i++)
+	{
+		Chromosome* chromosome = (*population)[i];
+		if (chromosome->cost < c)
+		{
+			c = chromosome->cost;
+			bestSolution = chromosome;
+		}
+	}
+}
+
 void SimpleGA::stepGA()
 {
-	// Evaluate population
-	// Select parents
-	// Reproduce using genetic operators
-	// Replace population with offspring
+	for (int i = 0; i < generations; i++)
+	{
+		evaluatePopulation();
+		reproduceOffspring();
+		replacePopulation();
+		evaluateSolution();
+	}
 }
 
 void SimpleGA::writeResult()
