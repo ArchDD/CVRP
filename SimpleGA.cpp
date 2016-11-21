@@ -6,6 +6,7 @@
 #include <sstream>
 #include <limits>
 #include <algorithm>
+#include <ctime>
 
 SimpleGA::SimpleGA(vector<Chromosome*>* p, vector<Node*>* n, int d, int c)
 {
@@ -14,8 +15,8 @@ SimpleGA::SimpleGA(vector<Chromosome*>* p, vector<Node*>* n, int d, int c)
 	dimension = d;
 	capacity = c;
 
-	generations = 1000;
-	samples = 100;
+	generations = 5;
+	samples = 250;
 	mutationProbability = 0.1;
 }
 
@@ -139,13 +140,49 @@ void SimpleGA::evaluateSolution()
 
 void SimpleGA::stepGA()
 {
+	/*clock_t t = clock();
 	for (int i = 0; i < generations; i++)
+	{
+		//clock_t d = clock();
+		reproduceOffspring();
+		//d = clock() - d; printf("reproduceOffspring: %f seconds\n", ((double)d)/CLOCKS_PER_SEC); d = clock();
+
+		evaluatePopulation();
+		//d = clock() - d; printf("evaluatePopulation: %f seconds\n", ((double)d)/CLOCKS_PER_SEC); d = clock();
+
+		replacePopulation();
+		//d = clock() - d; printf("replacePopulation: %f seconds\n", ((double)d)/CLOCKS_PER_SEC); d = clock();
+
+		evaluateSolution();
+		//d = clock() - d; printf("evaluateSolution: %f seconds\n", ((double)d)/CLOCKS_PER_SEC); d = clock();
+	}
+	t = clock() - t;
+	printf("Time taken: %f seconds\n", ((double)t)/CLOCKS_PER_SEC);*/
+
+	clock_t t1 = clock(), t2 = clock(), t3 = clock();
+	float f = 0.0f;
+	int i = 0, batch = 100;
+	float timeLimit = 1.0f * 20.0f, batchTime = 0.0f;
+
+	while (f < timeLimit)
 	{
 		reproduceOffspring();
 		evaluatePopulation();
 		replacePopulation();
 		evaluateSolution();
+
+		if (i % batch == 0)
+		{
+			t2 = clock() - t1;
+			f = ((float)t2 / CLOCKS_PER_SEC);
+			t3 = clock() - t3;
+			batchTime = ((float)t3 / CLOCKS_PER_SEC);
+		}
+		i++;
 	}
+	t1 = clock() - t1;
+	printf("Time taken: %f seconds\n", ((double)t1)/CLOCKS_PER_SEC);
+	printf("Iterations completed: %d\n", i);
 }
 
 void SimpleGA::writeResult()
