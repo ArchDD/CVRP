@@ -7,6 +7,8 @@
 #include <limits>
 #include <algorithm>
 #include <ctime>
+#include <map>
+#include <iterator>
 
 SimpleGA::SimpleGA(vector<Chromosome*>* p, vector<Node*>* n, int d, int c)
 {
@@ -15,7 +17,7 @@ SimpleGA::SimpleGA(vector<Chromosome*>* p, vector<Node*>* n, int d, int c)
 	dimension = d;
 	capacity = c;
 
-	generations = 5;
+	//generations = 5;
 	samples = 250;
 	mutationProbability = 0.1;
 }
@@ -36,8 +38,6 @@ void SimpleGA::evaluatePopulation()
 	for (int i = 0; i < samples; i++)
 	{
 		(*population)[i]->evaluateFitness();
-		for (int j = 0; j < (*population)[i]->genes.size(); j++)
-			(*population)[i]->evaluateLoad( (*population)[i]->genes[j] );
 	}
 
 	double totalFitness = 0.0;
@@ -82,9 +82,11 @@ void SimpleGA::reproduceOffspring()
 		if (c1 == NULL || c2 == NULL) printf("Null parents selected\n");
 		// Reselect if same chromosome
 		if (c1 != c2)
-			pmx(c1, c2);
+		{
+			//pmx(c1, c2);
+			vrpCrossover(c1, c2);
+		}
 	}
-
 	// Free extra chromosomes
 	while(offsprings.size() > samples)
 	{
@@ -164,7 +166,7 @@ void SimpleGA::stepGA()
 	clock_t t1 = clock(), t2 = clock(), t3 = clock();
 	float f = 0.0f;
 	int i = 0, batch = 10;
-	float timeLimit = 1.0f * 10.0f, batchTime = 0.0f;
+	float timeLimit = 1.0f * 20.0f, batchTime = 0.0f;
 
 	while (f < timeLimit)
 	{
@@ -271,6 +273,8 @@ void SimpleGA::pmx(Chromosome* p1, Chromosome* p2)
 			acceptable = false;
 	if (acceptable)
 		offsprings.push_back(b1);
+	else
+		b1->free();
 
 	acceptable = true;
 	for (int i = 0; i < b2->genes.size(); i++)
@@ -278,6 +282,8 @@ void SimpleGA::pmx(Chromosome* p1, Chromosome* p2)
 			acceptable = false;
 	if (acceptable)
 		offsprings.push_back(b2);
+	else
+		b2->free();
 }
 
 void SimpleGA::swapGenes(int pos, Chromosome* p1, Chromosome* p2, Chromosome* chromosome)
@@ -348,6 +354,160 @@ void SimpleGA::swapGenes(int pos, Chromosome* p1, Chromosome* p2, Chromosome* ch
 	//Evaluate new load
 	chromosome->evaluateLoad(chromosome->genes[i3]);
 	chromosome->evaluateLoad(chromosome->genes[i4]);
+}
+
+void SimpleGA::vrpCrossover(Chromosome* p1, Chromosome* p2)
+{
+	Chromosome* chromosome = new Chromosome(p1);
+	for (int i = 0; i < chromosome->genes.size(); i++)
+	{
+		delete(chromosome->genes[i]);
+	}
+	chromosome->genes.clear();
+
+	// Create selection of customers
+	map<int, int> customers;
+	for (int i = 0; i < dimension; i++)
+		customers[i] = i;
+	// Remove depot
+	customers.erase(0);
+
+	while (customers.size() > 0)
+	{
+		// Select random customer
+		map<int, int>::iterator it = customers.begin();
+		advance(it, rand() % customers.size() );
+		int c = it->first;
+
+		// Pick subroutes including customer from parents
+		Vehicle* v1;
+		Vehicle* v2;
+		Vehicle* v3;
+		for (int i = 0; i < p1->genes.size(); i++)
+		{
+			for (int j = 0; j < p1->genes[i]->route.size(); j++)
+			{
+				if (p1->genes[i]->route[j] == c)
+				{
+					v1 = p1->genes[i];
+				}
+
+			}
+		}
+		for (int i = 0; i < p2->genes.size(); i++)
+		{
+			for (int j = 0; j < p2->genes[i]->route.size(); j++)
+			{
+				if (p2->genes[i]->route[j] == c)
+				{
+					v2 = p2->genes[i];
+				}
+
+			}
+		}
+
+		bool subset1 = true, subset2 = true;
+		// Determine whether subroutes are subsets of remaining customers
+		for (int i = 0; i < v1->route.size(); i++)
+		{
+		
+			if (customers.count( v1->route[i] ) == 0)
+				subset1 = false;
+		}
+		for (int i = 0; i < v2->route.size(); i++)
+		{
+			if (customers.count( v2->route[i] ) == 0)
+				subset2 = false;
+		}
+
+		int s1 = 1, s2 = 1;
+		if (subset1 && subset2)
+		{
+			float f1 = (float)s1;
+			float f2 = (float)s2;
+			float p1 = f2 / (f1 + f2);
+			//float p2 = f1 / (f1 + f2);
+			float p = (float)rand() / RAND_MAX;
+			//printf("p %f p1 %f\n", p , p1);
+			if (p < p1)
+			{
+				v3 = v1;
+				s1+=1;
+			}
+			else
+			{
+				v3 = v2;
+				s2+=1;
+			}
+			chromosome->genes.push_back ( new Vehicle(v3) );
+			// Remove subroute from customers
+			for (int i = 1; i < v3->route.size()-1; i++)
+			{
+				printf("v3 %x size %d i %d\n", v3, v3->route.size(), i);
+				int n = v3->route[i];
+				customers.erase(n);
+			}
+		}
+		else if (subset1)
+		{
+			v3 = v1;
+			s1+=1;
+			chromosome->genes.push_back ( new Vehicle(v3) );
+			// Remove subroute from customers
+			for (int i = 1; i < v3->route.size()-1; i++)
+			{
+				customers.erase(v3->route[i]);
+			}
+		}
+		else if (subset2)
+		{
+			v3 = v2;
+			s2+=1;
+			chromosome->genes.push_back ( new Vehicle(v3) );
+			// Remove subroute from customers
+			for (int i = 1; i < v3->route.size()-1; i++)
+			{
+				customers.erase(v3->route[i]);
+			}
+		}
+		else if (subset1 == false || subset2 == false)
+		{
+			Vehicle* v = new Vehicle();
+			v->route.push_back(0);
+			v->route.push_back(0);
+			bool overCapacity = false;
+			while(customers.size() > 0 && overCapacity == false)
+			{
+				// Select random customer left
+				it = customers.begin();
+				advance(it, rand() % customers.size());
+				int j = it->first;
+
+				chromosome->evaluateLoad(v);
+				if (v->load + (*nodes)[j]->demand <= capacity)
+				{
+					v->route.pop_back();
+					v->route.push_back(j);
+					v->route.push_back(0);
+					customers.erase(j);
+				}
+				else
+				{
+					overCapacity = true;
+				}
+			}
+			chromosome->genes.push_back(v);
+		}
+	}
+	chromosome->evaluateFitness();
+	for (int i = 0; i< chromosome->genes.size(); i++)
+	{
+		chromosome->evaluateLoad(chromosome->genes[i]);
+		if (chromosome->genes[i]->load > capacity)
+			for (int j = 0; j < chromosome->genes[i]->route.size(); j++)
+				printf("%d->",chromosome->genes[i]->route[j]);
+	}
+	offsprings.push_back(chromosome);
 }
 
 // MUTATIONS

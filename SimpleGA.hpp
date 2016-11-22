@@ -29,6 +29,7 @@ public:
 	void run();
 
 	void pmx(Chromosome* p1, Chromosome* p2);
+	void vrpCrossover(Chromosome* p1, Chromosome* p2);
 	void swapGenes(int i, Chromosome* p1, Chromosome* p2, Chromosome* chromosome);
 	Chromosome* swapMutation(Chromosome* ch);
 };
