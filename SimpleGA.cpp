@@ -120,9 +120,9 @@ void SimpleGA::replacePopulation()
 		offsprings.pop_back();
 
 		// Mutate if not best solution
-		/*double p = (double)rand() / RAND_MAX;
+		double p = (double)rand() / RAND_MAX;
 		if (p < mutationProbability && population->back() != bestSolution)
-			population->back() = swapMutation(population->back());*/
+			population->back() = swapMutation(population->back());
 	}
 }
 
