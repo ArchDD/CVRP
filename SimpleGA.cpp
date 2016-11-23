@@ -18,8 +18,8 @@ SimpleGA::SimpleGA(vector<Chromosome*>* p, vector<Node*>* n, int d, int c)
 	capacity = c;
 
 	//generations = 5;
-	samples = 250;
-	mutationProbability = 0.1;
+	samples = 100;
+	mutationProbability = 0.25;
 }
 
 void SimpleGA::generatePopulation()
@@ -83,8 +83,13 @@ void SimpleGA::reproduceOffspring()
 		// Reselect if same chromosome
 		if (c1 != c2)
 		{
-			//pmx(c1, c2);
-			vrpCrossover(c1, c2);
+			/*float p = (float)rand() / RAND_MAX;
+			if (p < 0.5)
+				pmx(c1, c2);
+			else
+				vrpCrossover(c1, c2);*/
+
+			scx(c1, c2);
 		}
 	}
 	// Free extra chromosomes
@@ -359,11 +364,7 @@ void SimpleGA::swapGenes(int pos, Chromosome* p1, Chromosome* p2, Chromosome* ch
 void SimpleGA::vrpCrossover(Chromosome* p1, Chromosome* p2)
 {
 	Chromosome* chromosome = new Chromosome(p1);
-	for (int i = 0; i < chromosome->genes.size(); i++)
-	{
-		delete(chromosome->genes[i]);
-	}
-	chromosome->genes.clear();
+	chromosome->clearRoute();
 
 	// Create selection of customers
 	map<int, int> customers;
@@ -507,6 +508,120 @@ void SimpleGA::vrpCrossover(Chromosome* p1, Chromosome* p2)
 			for (int j = 0; j < chromosome->genes[i]->route.size(); j++)
 				printf("%d->",chromosome->genes[i]->route[j]);
 	}
+	offsprings.push_back(chromosome);
+}
+
+// Sequential Constructive Crossover Operator (SCX)
+void SimpleGA::scx(Chromosome* p1, Chromosome* p2)
+{
+	Chromosome* chromosome = new Chromosome(p1);
+	chromosome->clearRoute();
+
+	// Create selection of customers
+	map<int, int> customers;
+	for (int i = 0; i < dimension; i++)
+		customers[i] = i;
+	// Remove depot and first node
+	customers.erase(0);
+	customers.erase(1);
+	int node = 1, a, b;
+
+	// Create first subroute
+	Vehicle* v = new Vehicle();
+	v->route.push_back(0);
+	v->route.push_back(node);
+	v->route.push_back(0);
+	chromosome->genes.push_back(v);
+
+	while(customers.size() > 0)
+	{
+		// Sequentially search both parent chromosomes for first unvisited node after
+		int found = false, selected = false;
+		for (int i = 0; i < p1->genes.size(); i++)
+		{
+			for (int j = 1; j < p1->genes[i]->route.size()-1; j++)
+			{
+				if (!found)
+				{
+					if (node == p1->genes[i]->route[j])
+						found = true;
+				}
+				else if (!selected)
+				{
+					if (!chromosome->containsGene(p1->genes[i]->route[j]))
+					{
+						a = p1->genes[i]->route[j];
+						selected = true;
+					}
+				}
+			}
+		}
+		// If none after node, search sequentially from pool
+		if (selected == false)
+		{
+			for (int i = 2; i < dimension; i++)
+			{
+				if (!chromosome->containsGene(i))
+					a = i;
+			}
+		}
+
+		found = false, selected = false;
+		for (int i = 0; i < p2->genes.size(); i++)
+		{
+			for (int j = 1; j < p2->genes[i]->route.size()-1; j++)
+			{
+				if (!found)
+				{
+					if (node == p2->genes[i]->route[j])
+						found = true;
+				}
+				else if (!selected)
+				{
+					if (!chromosome->containsGene(p2->genes[i]->route[j]))
+					{
+						b = p2->genes[i]->route[j];
+						selected = true;
+					}
+				}
+			}
+		}
+		// If none after node, search sequentially from pool
+		if (selected == false)
+		{
+			for (int i = 2; i < dimension; i++)
+			{
+				if (!chromosome->containsGene(i))
+					b = i;
+			}
+		}
+		// Select the closer node
+		int c;
+		if (chromosome->distance(node, a) < chromosome->distance(node, b))
+			c = a;
+		else
+			c = b;
+
+		chromosome->evaluateLoad(v);
+		if (v->load + (*nodes)[c]->demand <= capacity)
+		{
+			v->route.pop_back();
+			v->route.push_back(c);
+			v->route.push_back(0);
+		}
+		else
+		{
+			v = new Vehicle();
+			v->route.push_back(0);
+			v->route.push_back(c);
+			v->route.push_back(0);
+			chromosome->genes.push_back(v);
+		}
+		//if (customers.count(c) == 0) printf("Bad node %d\n", c);
+		//if (chromosome->containsGene(c)) printf("Contains %d\n", c);
+		customers.erase(c);
+	}
+
 	offsprings.push_back(chromosome);
 }
 

@@ -48,6 +48,15 @@ void Chromosome::initialise()
 	evaluateFitness();
 }
 
+void Chromosome::clearRoute()
+{
+	for (int i = 0; i < genes.size(); i++)
+	{
+		delete(genes[i]);
+	}
+	genes.clear();
+}
+
 void Chromosome::createSubroute()
 {
 	// Random integer in range 1 to customer size
@@ -98,25 +107,25 @@ void Chromosome::evaluateFitness()
 		// Retrieve node value from route
 		for (int j = 0; j < v->route.size()-1; j++)
 		{
-			int n1 = v->route[j];
-			int x1 = (*nodes)[n1]->x;
-			int y1 = (*nodes)[n1]->y;
-
-			int n2 = v->route[j+1];
-			int x2 = (*nodes)[n2]->x;
-			int y2 = (*nodes)[n2]->y;
-
-			int x = (x1 - x2);
-			int y = (y1 - y2);
-
-			double distanceSquared = (x*x + y*y)*1.0;
-
-			c += sqrt(distanceSquared);
+			c += distance(v->route[j], v->route[j+1]);
 		}
 	}
 
 	cost = c;
 	fitness = 100000.0/cost;
+}
+
+double Chromosome::distance(int n1, int n2)
+{
+	int x1 = (*nodes)[n1]->x;
+	int y1 = (*nodes)[n1]->y;
+	int x2 = (*nodes)[n2]->x;
+	int y2 = (*nodes)[n2]->y;
+
+	int x = (x1 - x2);
+	int y = (y1 - y2);
+	double distanceSquared = (x*x + y*y)*1.0;
+	return sqrt(distanceSquared);
 }
 
 void Chromosome::evaluateLoad(Vehicle* vehicle)
@@ -128,6 +137,19 @@ void Chromosome::evaluateLoad(Vehicle* vehicle)
 		load += (*nodes)[n]->demand;
 	}
 	vehicle->load = load;
+}
+
+bool Chromosome::containsGene(int n)
+{
+	for (int i = 0; i < genes.size(); i++)
+	{
+		for (int j = 1; j < genes[i]->route.size()-1; j++)
+		{
+			if (n == genes[i]->route[j])
+				return true;
+		}
+	}
+	return false;
 }
 
 void Chromosome::free()

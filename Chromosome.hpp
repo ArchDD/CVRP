@@ -13,6 +13,8 @@ class Vehicle
 public:
 	int load;
 	vector<int> route;
+	Vehicle() {};
+	Vehicle(Vehicle* v) { load = v->load; route = v->route; };
 };
 
 class Chromosome
@@ -32,10 +34,13 @@ public:
 	Chromosome(vector<Node*>* n, int d, int c);
 	Chromosome(Chromosome* chromosome);
 	void initialise();
+	void clearRoute();
 	void createSubroute();
 	void appendSubroute();
+	double distance(int n1, int n2);
 	void evaluateFitness();
 	void evaluateProbability();
 	void evaluateLoad(Vehicle* vehicle);
+	bool containsGene(int n);
 	void free();
 };
