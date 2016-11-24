@@ -16,7 +16,7 @@ SimpleGA::SimpleGA(vector<Chromosome*>* p, vector<Node*>* n, int d, int c)
 	nodes = n;
 	dimension = d;
 	capacity = c;
-	samples = 20;
+	samples = 100;
 	mutationProbability = 0.25;
 }
 
@@ -67,17 +67,16 @@ void SimpleGA::reproduceOffspring()
 		// Reselect if same chromosome
 		if (c1 != c2)
 		{
-			/*float p = (float)rand() / RAND_MAX;
-			if (p < 0.6f)
+			float p = (float)rand() / RAND_MAX;
+			if (p < 0.8f)
 				pmx(c1, c2);
-			else if (p > 0.6f && p < 0.9f)
+			else if (p > 0.8f && p < 0.9f)
 				scx(c1, c2);
 			else
-				vrpCrossover(c1, c2);*/
-			pmx(c1,c2);
+				vrpCrossover(c1, c2);
+			//pmx(c1,c2);
 			//scx(c1,c2);
 			//vrpCrossover(c1,c2);
-			//offsprings.push_back( new Chromosome(c1)); offsprings.push_back( new Chromosome(c2));
 		}
 	}
 	// Free extra chromosomes
@@ -97,7 +96,6 @@ void SimpleGA::reproduceOffspring()
 		last->free();
 		offsprings.push_back(best);
 	}
-
 }
 
 
@@ -140,7 +138,7 @@ void SimpleGA::stepGA()
 	clock_t t1 = clock(), t2 = clock(), t3 = clock();
 	float f = 0.0f;
 	int i = 0, batch = 10;
-	float timeLimit = 1.0f * 10.0f, batchTime = 0.0f;
+	float timeLimit = 1.0f * 60.0f, batchTime = 0.0f;
 
 	while (f < timeLimit)
 	{
@@ -175,9 +173,10 @@ void SimpleGA::writeResult()
 	file << "login dd13282 61545\n";
 	file << "name Dillon Keith Diep\n";
 	file << "algorithm Genetic Algorithm\n";
-	file << "cost " << bestSolution->evaluatePreciseCost() <<endl;
+	double cost = bestSolution->evaluatePreciseCost();
+	file << "cost " << cost <<endl;
 
-	printf("Best Cost: %f\n", bestSolution->evaluatePreciseCost());
+	printf("Best Cost: %f\n", cost);
 
 	string n;
 	stringstream convert;
@@ -243,10 +242,17 @@ vector<Chromosome*> SimpleGA::rouletteSelection()
 vector<Chromosome*> SimpleGA::tournamentSelection(int n)
 {
 	vector<Chromosome*> selection;
-	for (int i = 0; i < n; i++)
+	
+	while (selection.size() < n)
 	{
-		int v = (rand() % dimension - 1) + 1;
-		selection.push_back((*population)[i]);
+		int v = rand() % population->size();
+		Chromosome* c = (*population)[v];
+		bool contains = false;
+		for (int i = 0; i < selection.size(); i++)
+			if (selection[i] == c)
+				contains = true;
+		if (!contains)
+			selection.push_back(c);
 	}
 	Chromosome* c1;
 	Chromosome* c2;
@@ -545,26 +551,32 @@ void SimpleGA::scx(Chromosome* p1, Chromosome* p2)
 	Chromosome* chromosome = new Chromosome(p1);
 	chromosome->clearRoute();
 
+	// Choose first node randomly
+	int node = (rand() % dimension-1) + 1;
+
+	// Create route map to quickly determine if nodes are already chosen
+	map<int, int> route;
+	route[0] = 0;
+	route[node] = node;
+
 	// Create selection of customers
 	map<int, int> customers;
 	for (int i = 0; i < dimension; i++)
 		customers[i] = i;
-	// Remove depot and first node
+	// Remove depot and first random node
 	customers.erase(0);
-	customers.erase(1);
-	int node = 1, a, b;
+	customers.erase(node);
+	int a, b;
 
-	// Create first subroute
 	Vehicle* v = new Vehicle();
 	v->route.push_back(0);
 	v->route.push_back(node);
 	v->route.push_back(0);
 	chromosome->genes.push_back(v);
 
-	while(customers.size() > 0)
+	while(!customers.empty())
 	{
-		// Sequentially search both parent chromosomes for first unvisited node after
-		int found = false, selected = false;
+		bool found = false, selected = false;
 		for (int i = 0; i < p1->genes.size(); i++)
 		{
 			for (int j = 1; j < p1->genes[i]->route.size()-1; j++)
@@ -576,7 +588,7 @@ void SimpleGA::scx(Chromosome* p1, Chromosome* p2)
 				}
 				else if (!selected)
 				{
-					if (!chromosome->containsGene(p1->genes[i]->route[j]))
+					if (route.count(p1->genes[i]->route[j]) == 0)
 					{
 						a = p1->genes[i]->route[j];
 						selected = true;
@@ -584,17 +596,17 @@ void SimpleGA::scx(Chromosome* p1, Chromosome* p2)
 				}
 			}
 		}
-		// If none after node, search sequentially from pool
 		if (selected == false)
 		{
-			for (int i = 2; i < dimension; i++)
+			for (int i = 1; i < dimension; i++)
 			{
-				if (!chromosome->containsGene(i))
+				if (route.count(i) == 0)
 					a = i;
 			}
 		}
 
-		found = false, selected = false;
+		found = false;
+		selected = false;
 		for (int i = 0; i < p2->genes.size(); i++)
 		{
 			for (int j = 1; j < p2->genes[i]->route.size()-1; j++)
@@ -606,7 +618,7 @@ void SimpleGA::scx(Chromosome* p1, Chromosome* p2)
 				}
 				else if (!selected)
 				{
-					if (!chromosome->containsGene(p2->genes[i]->route[j]))
+					if (route.count(p2->genes[i]->route[j]) == 0)
 					{
 						b = p2->genes[i]->route[j];
 						selected = true;
@@ -614,16 +626,15 @@ void SimpleGA::scx(Chromosome* p1, Chromosome* p2)
 				}
 			}
 		}
-		// If none after node, search sequentially from pool
 		if (selected == false)
 		{
-			for (int i = 2; i < dimension; i++)
+			for (int i = 1; i < dimension; i++)
 			{
-				if (!chromosome->containsGene(i))
+				if (route.count(i) == 0)
 					b = i;
 			}
 		}
-		// Select the closer node
+
 		int c;
 		if ((*nodes)[node]->distances[a] < (*nodes)[node]->distances[b])
 			c = a;
@@ -645,9 +656,9 @@ void SimpleGA::scx(Chromosome* p1, Chromosome* p2)
 			v->route.push_back(0);
 			chromosome->genes.push_back(v);
 		}
+		route[c] = c;
 		customers.erase(c);
 	}
-
 	offsprings.push_back(chromosome);
 }
 
