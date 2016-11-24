@@ -14,7 +14,7 @@ private:
 
 	int samples;
 	int generations;
-	double mutationProbability;
+	float mutationProbability;
 
 	Chromosome* bestSolution;
 public:

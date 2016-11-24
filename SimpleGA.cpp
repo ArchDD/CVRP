@@ -16,9 +16,7 @@ SimpleGA::SimpleGA(vector<Chromosome*>* p, vector<Node*>* n, int d, int c)
 	nodes = n;
 	dimension = d;
 	capacity = c;
-
-	//generations = 5;
-	samples = 100;
+	samples = 20;
 	mutationProbability = 0.25;
 }
 
@@ -40,7 +38,7 @@ void SimpleGA::evaluatePopulation()
 		(*population)[i]->evaluateFitness();
 	}
 
-	double totalFitness = 0.0;
+	float totalFitness = 0.0f;
 	for (int i = 0; i < samples; i++)
 	{
 		// Aggregate total fitness
@@ -69,13 +67,17 @@ void SimpleGA::reproduceOffspring()
 		// Reselect if same chromosome
 		if (c1 != c2)
 		{
-			float p = (float)rand() / RAND_MAX;
+			/*float p = (float)rand() / RAND_MAX;
 			if (p < 0.6f)
 				pmx(c1, c2);
 			else if (p > 0.6f && p < 0.9f)
 				scx(c1, c2);
 			else
-				vrpCrossover(c1, c2);
+				vrpCrossover(c1, c2);*/
+			pmx(c1,c2);
+			//scx(c1,c2);
+			//vrpCrossover(c1,c2);
+			//offsprings.push_back( new Chromosome(c1)); offsprings.push_back( new Chromosome(c2));
 		}
 	}
 	// Free extra chromosomes
@@ -113,7 +115,7 @@ void SimpleGA::replacePopulation()
 		offsprings.pop_back();
 
 		// Mutate if not best solution
-		double p = (double)rand() / RAND_MAX;
+		float p = (float)rand() / RAND_MAX;
 		if (p < mutationProbability && population->back() != bestSolution)
 			population->back() = swapMutation(population->back());
 	}
@@ -121,7 +123,7 @@ void SimpleGA::replacePopulation()
 
 void SimpleGA::evaluateSolution()
 {
-	double c = numeric_limits<double>::max();
+	float c = numeric_limits<float>::max();
 	for (int i = 0; i < population->size(); i++)
 	{
 		Chromosome* chromosome = (*population)[i];
@@ -138,7 +140,7 @@ void SimpleGA::stepGA()
 	clock_t t1 = clock(), t2 = clock(), t3 = clock();
 	float f = 0.0f;
 	int i = 0, batch = 10;
-	float timeLimit = 25.0f * 60.0f, batchTime = 0.0f;
+	float timeLimit = 1.0f * 10.0f, batchTime = 0.0f;
 
 	while (f < timeLimit)
 	{
@@ -157,7 +159,7 @@ void SimpleGA::stepGA()
 		i++;
 	}
 	t1 = clock() - t1;
-	printf("Time taken: %f seconds\n", ((double)t1)/CLOCKS_PER_SEC);
+	printf("Time taken: %f seconds\n", ((float)t1)/CLOCKS_PER_SEC);
 	printf("Iterations completed: %d\n", i);
 }
 
@@ -175,7 +177,7 @@ void SimpleGA::writeResult()
 	file << "algorithm Genetic Algorithm\n";
 	file << "cost " << bestSolution->cost <<endl;
 
-	printf("Best Cost: %f\n", bestSolution->cost);
+	printf("Best Cost: %f\n", bestSolution->evaluatePreciseCost());
 
 	string n;
 	stringstream convert;
@@ -218,9 +220,9 @@ vector<Chromosome*> SimpleGA::rouletteSelection()
 {
 	Chromosome* c1;
 	Chromosome* c2;
-	double p = 0.0;
-	double p1 = (double)rand() / RAND_MAX;
-	double p2 = (double)rand() / RAND_MAX;
+	float p = 0.0f;
+	float p1 = (float)rand() / RAND_MAX;
+	float p2 = (float)rand() / RAND_MAX;
 
 	for (int i = 0; i < samples; i++)
 	{
@@ -249,8 +251,8 @@ vector<Chromosome*> SimpleGA::tournamentSelection(int n)
 	Chromosome* c1;
 	Chromosome* c2;
 	int a, b;
-	double cost1 = numeric_limits<double>::max();
-	double cost2 = cost1;
+	float cost1 = numeric_limits<float>::max();
+	float cost2 = cost1;
 
 	for (int i = 0; i < n; i++)
 	{
@@ -623,7 +625,7 @@ void SimpleGA::scx(Chromosome* p1, Chromosome* p2)
 		}
 		// Select the closer node
 		int c;
-		if (chromosome->distance(node, a) < chromosome->distance(node, b))
+		if ((*nodes)[node]->distances[a] < (*nodes)[node]->distances[b])
 			c = a;
 		else
 			c = b;
@@ -643,8 +645,6 @@ void SimpleGA::scx(Chromosome* p1, Chromosome* p2)
 			v->route.push_back(0);
 			chromosome->genes.push_back(v);
 		}
-		//if (customers.count(c) == 0) printf("Bad node %d\n", c);
-		//if (chromosome->containsGene(c)) printf("Contains %d\n", c);
 		customers.erase(c);
 	}
 

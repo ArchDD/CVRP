@@ -6,6 +6,11 @@
 #include <vector>
 #include <math.h>
 
+Node::Node()
+{ 
+	distances = (float*)malloc(sizeof(float) * 250);
+}
+
 Chromosome::Chromosome(vector<Node*>* n, int d, int c)
 {
 	nodes = n;
@@ -99,7 +104,7 @@ void Chromosome::appendSubroute()
 
 void Chromosome::evaluateFitness()
 {
-	double c = 0.0;
+	float c = 0.0f;
 	// Evaluate through each vehicle
 	for (int i = 0; i < genes.size(); i++)
 	{
@@ -107,25 +112,12 @@ void Chromosome::evaluateFitness()
 		// Retrieve node value from route
 		for (int j = 0; j < v->route.size()-1; j++)
 		{
-			c += distance(v->route[j], v->route[j+1]);
+			c += (*nodes)[v->route[j]] -> distances[v->route[j+1]];
 		}
 	}
 
 	cost = c;
-	fitness = 100000.0/cost;
-}
-
-double Chromosome::distance(int n1, int n2)
-{
-	int x1 = (*nodes)[n1]->x;
-	int y1 = (*nodes)[n1]->y;
-	int x2 = (*nodes)[n2]->x;
-	int y2 = (*nodes)[n2]->y;
-
-	int x = (x1 - x2);
-	int y = (y1 - y2);
-	double distanceSquared = (x*x + y*y)*1.0;
-	return sqrt(distanceSquared);
+	fitness = 100000.0f/cost;
 }
 
 void Chromosome::evaluateLoad(Vehicle* vehicle)
@@ -137,6 +129,31 @@ void Chromosome::evaluateLoad(Vehicle* vehicle)
 		load += (*nodes)[n]->demand;
 	}
 	vehicle->load = load;
+}
+
+double Chromosome::evaluatePreciseCost()
+{
+	double c = 0.0;
+	// Evaluate through each vehicle
+	for (int i = 0; i < genes.size(); i++)
+	{
+		Vehicle* v = genes[i];
+		// Retrieve node value from route
+		for (int j = 0; j < v->route.size()-1; j++)
+		{
+			int n1 = v->route[j], n2 = v->route[j+1];
+			int x1 = (*nodes)[n1]->x;
+			int y1 = (*nodes)[n1]->y;
+			int x2 = (*nodes)[n2]->x;
+			int y2 = (*nodes)[n2]->y;
+
+			int x = (x1 - x2);
+			int y = (y1 - y2);
+			double distanceSquared = (x*x + y*y)*1.0;
+			c += sqrt(distanceSquared);
+		}
+	}
+	return c;
 }
 
 bool Chromosome::containsGene(int n)

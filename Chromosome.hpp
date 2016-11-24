@@ -6,6 +6,9 @@ class Node
 {
 public:
 	int x, y, demand;
+	//vector<Node*> closest;
+	float *distances;
+	Node();
 };
 
 class Vehicle
@@ -27,9 +30,9 @@ protected:
 	vector<Node*>* nodes;
 public:
 	vector<Vehicle*> genes;
-	double fitness;
-	double probability;
-	double cost;
+	float fitness;
+	float probability;
+	float cost;
 
 	Chromosome(vector<Node*>* n, int d, int c);
 	Chromosome(Chromosome* chromosome);
@@ -37,8 +40,8 @@ public:
 	void clearRoute();
 	void createSubroute();
 	void appendSubroute();
-	double distance(int n1, int n2);
 	void evaluateFitness();
+	double evaluatePreciseCost();
 	void evaluateProbability();
 	void evaluateLoad(Vehicle* vehicle);
 	bool containsGene(int n);
