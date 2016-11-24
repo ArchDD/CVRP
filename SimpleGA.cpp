@@ -175,7 +175,7 @@ void SimpleGA::writeResult()
 	file << "login dd13282 61545\n";
 	file << "name Dillon Keith Diep\n";
 	file << "algorithm Genetic Algorithm\n";
-	file << "cost " << bestSolution->cost <<endl;
+	file << "cost " << bestSolution->evaluatePreciseCost() <<endl;
 
 	printf("Best Cost: %f\n", bestSolution->evaluatePreciseCost());
 
