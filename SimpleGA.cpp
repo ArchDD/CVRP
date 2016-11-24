@@ -58,38 +58,24 @@ void SimpleGA::evaluatePopulation()
 void SimpleGA::reproduceOffspring()
 {
 	// Select parents
-	// Roulette wheel selection
 	while(offsprings.size() < samples)
 	{
-		Chromosome* c1;
-		Chromosome* c2;
-		
-		double p = 0.0;
-		double p1 = (double)rand() / RAND_MAX;
-		double p2 = (double)rand() / RAND_MAX;
-
-		for (int i = 0; i < samples; i++)
-		{
-			Chromosome* c = (*population)[i];
-			if (p1 > p && p1 < p+c->probability)
-				c1 = c;
-			if (p2 > p && p2 < p+c->probability)
-				c2 = c;
-
-			p += c->probability;
-		}
+		//vector<Chromosome*> parents = rouletteSelection();
+		vector<Chromosome*> parents = tournamentSelection(10);
+		Chromosome* c1 = parents[0];
+		Chromosome* c2 = parents[1];
 
 		if (c1 == NULL || c2 == NULL) printf("Null parents selected\n");
 		// Reselect if same chromosome
 		if (c1 != c2)
 		{
-			/*float p = (float)rand() / RAND_MAX;
-			if (p < 0.5)
+			float p = (float)rand() / RAND_MAX;
+			if (p < 0.6f)
 				pmx(c1, c2);
+			else if (p > 0.6f && p < 0.9f)
+				scx(c1, c2);
 			else
-				vrpCrossover(c1, c2);*/
-
-			scx(c1, c2);
+				vrpCrossover(c1, c2);
 		}
 	}
 	// Free extra chromosomes
@@ -149,29 +135,10 @@ void SimpleGA::evaluateSolution()
 
 void SimpleGA::stepGA()
 {
-	/*clock_t t = clock();
-	for (int i = 0; i < generations; i++)
-	{
-		//clock_t d = clock();
-		reproduceOffspring();
-		//d = clock() - d; printf("reproduceOffspring: %f seconds\n", ((double)d)/CLOCKS_PER_SEC); d = clock();
-
-		evaluatePopulation();
-		//d = clock() - d; printf("evaluatePopulation: %f seconds\n", ((double)d)/CLOCKS_PER_SEC); d = clock();
-
-		replacePopulation();
-		//d = clock() - d; printf("replacePopulation: %f seconds\n", ((double)d)/CLOCKS_PER_SEC); d = clock();
-
-		evaluateSolution();
-		//d = clock() - d; printf("evaluateSolution: %f seconds\n", ((double)d)/CLOCKS_PER_SEC); d = clock();
-	}
-	t = clock() - t;
-	printf("Time taken: %f seconds\n", ((double)t)/CLOCKS_PER_SEC);*/
-
 	clock_t t1 = clock(), t2 = clock(), t3 = clock();
 	float f = 0.0f;
 	int i = 0, batch = 10;
-	float timeLimit = 1.0f * 20.0f, batchTime = 0.0f;
+	float timeLimit = 25.0f * 60.0f, batchTime = 0.0f;
 
 	while (f < timeLimit)
 	{
@@ -246,7 +213,66 @@ void SimpleGA::run()
 	printf("Ending simple genetic algorithm\n");
 }
 
+// SELECTIONS
+vector<Chromosome*> SimpleGA::rouletteSelection()
+{
+	Chromosome* c1;
+	Chromosome* c2;
+	double p = 0.0;
+	double p1 = (double)rand() / RAND_MAX;
+	double p2 = (double)rand() / RAND_MAX;
 
+	for (int i = 0; i < samples; i++)
+	{
+		Chromosome* c = (*population)[i];
+		if (p1 > p && p1 < p+c->probability)
+			c1 = c;
+		if (p2 > p && p2 < p+c->probability)
+			c2 = c;
+
+		p += c->probability;
+	}
+	vector<Chromosome*> parents;
+	parents.push_back(c1);
+	parents.push_back(c2);
+	return parents;
+}
+
+vector<Chromosome*> SimpleGA::tournamentSelection(int n)
+{
+	vector<Chromosome*> selection;
+	for (int i = 0; i < n; i++)
+	{
+		int v = (rand() % dimension - 1) + 1;
+		selection.push_back((*population)[i]);
+	}
+	Chromosome* c1;
+	Chromosome* c2;
+	int a, b;
+	double cost1 = numeric_limits<double>::max();
+	double cost2 = cost1;
+
+	for (int i = 0; i < n; i++)
+	{
+		if (selection[i]->cost < cost2)
+		{
+			b = i;
+			cost2 = selection[i]->cost;
+		}
+		if (selection[i]->cost < cost1)
+		{
+			int tmp = a, tmpCost = cost1;
+			a = i;
+			cost1 = selection[i]->cost;
+			b = tmp;
+			cost2 = tmpCost;
+		}
+	}
+	vector<Chromosome*> parents;
+	parents.push_back(selection[a]);
+	parents.push_back(selection[b]);
+	return parents;
+}
 
 // CROSSOVERS
 // PMX crossover is a non-destructive operator

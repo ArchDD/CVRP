@@ -28,9 +28,13 @@ public:
 	void writeResult();
 	void run();
 
+
+	vector<Chromosome*> rouletteSelection();
+	vector<Chromosome*> tournamentSelection(int n);
 	void pmx(Chromosome* p1, Chromosome* p2);
+	void swapGenes(int i, Chromosome* p1, Chromosome* p2, Chromosome* chromosome);
 	void vrpCrossover(Chromosome* p1, Chromosome* p2);
 	void scx(Chromosome* p1, Chromosome* p2);
-	void swapGenes(int i, Chromosome* p1, Chromosome* p2, Chromosome* chromosome);
+
 	Chromosome* swapMutation(Chromosome* ch);
 };
