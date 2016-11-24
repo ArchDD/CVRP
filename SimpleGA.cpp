@@ -17,7 +17,7 @@ SimpleGA::SimpleGA(vector<Chromosome*>* p, vector<Node*>* n, int d, int c)
 	dimension = d;
 	capacity = c;
 	samples = 100;
-	mutationProbability = 0.25;
+	mutationProbability = 2.0f;
 }
 
 void SimpleGA::generatePopulation()
@@ -68,15 +68,12 @@ void SimpleGA::reproduceOffspring()
 		if (c1 != c2)
 		{
 			float p = (float)rand() / RAND_MAX;
-			if (p < 0.8f)
+			if (p < 0.7f)
 				pmx(c1, c2);
-			else if (p > 0.8f && p < 0.9f)
+			else if (p < 0.9f)
 				scx(c1, c2);
 			else
 				vrpCrossover(c1, c2);
-			//pmx(c1,c2);
-			//scx(c1,c2);
-			//vrpCrossover(c1,c2);
 		}
 	}
 	// Free extra chromosomes
@@ -133,6 +130,22 @@ void SimpleGA::evaluateSolution()
 	}
 }
 
+// Resets a portion of chromosomes from random position once a while
+void SimpleGA::filtration()
+{
+	map <int, int> filtered;
+	while(filtered.size() < samples/10)
+	{
+		int s = rand() % samples;
+		if (filtered.count(s) == 0 && (*population)[s] != bestSolution)
+		{
+			filtered[s] = s;
+			(*population)[s]->free();
+			(*population)[s] = new Chromosome(nodes, dimension, capacity);
+		}
+	}
+}
+
 void SimpleGA::stepGA()
 {
 	clock_t t1 = clock(), t2 = clock(), t3 = clock();
@@ -155,6 +168,8 @@ void SimpleGA::stepGA()
 			batchTime = ((float)t3 / CLOCKS_PER_SEC);
 		}
 		i++;
+		if (i % 200 == 0)
+			filtration();
 	}
 	t1 = clock() - t1;
 	printf("Time taken: %f seconds\n", ((float)t1)/CLOCKS_PER_SEC);
@@ -662,6 +677,25 @@ void SimpleGA::scx(Chromosome* p1, Chromosome* p2)
 	offsprings.push_back(chromosome);
 }
 
+// Order Crossover
+/*Chromosome* SimpleGA::orderCrossover(Chromosome* p1, Chromosome* p2)
+{
+	// Select a subtour 
+	// Create child by copying the subtour of a parent into corresponding position of it
+	// Fill in rest of nodes
+}*/
+// Position-Based Crossover
+/*Chromosome* SimpleGA::positionCrossover(Chromosome* p1, Chromosome* p2)
+{
+	// Select set of position from one parent at random
+	// Create child by copying nodes on at positions
+	// Remove set of nodes from other parent
+	// Fill in rest of nodes
+}*/
+
+// Cycle (CX) Crossover
+
+
 // MUTATIONS
 Chromosome* SimpleGA::swapMutation(Chromosome* ch)
 {
@@ -688,3 +722,6 @@ Chromosome* SimpleGA::swapMutation(Chromosome* ch)
 	return ch;
 }
 
+
+// Inversion Mutation
+// Insertion Mutation

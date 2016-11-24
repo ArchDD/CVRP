@@ -25,6 +25,7 @@ public:
 	void replacePopulation();
 	void evaluateSolution();
 	void stepGA();
+	void filtration();
 	void writeResult();
 	void run();
 
