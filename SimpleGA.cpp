@@ -17,7 +17,7 @@ SimpleGA::SimpleGA(vector<Chromosome*>* p, vector<Node*>* n, int d, int c)
 	dimension = d;
 	capacity = c;
 	samples = 100;
-	mutationProbability = 2.0f;
+	mutationProbability = 0.2f;
 }
 
 void SimpleGA::generatePopulation()
@@ -112,7 +112,8 @@ void SimpleGA::replacePopulation()
 		// Mutate if not best solution
 		float p = (float)rand() / RAND_MAX;
 		if (p < mutationProbability && population->back() != bestSolution)
-			population->back() = swapMutation(population->back());
+			//population->back() = swapMutation(population->back());
+			population->back() = inversionMutation(population->back());
 	}
 }
 
@@ -722,6 +723,43 @@ Chromosome* SimpleGA::swapMutation(Chromosome* ch)
 	return ch;
 }
 
+Chromosome* SimpleGA::inversionMutation(Chromosome* ch)
+{
+	Chromosome* mutation = new Chromosome(ch);
+	// Select a random subroute
+	int i = rand() % mutation->genes.size();
+	Vehicle *v = mutation->genes[i];
+	int j1 = (rand() % (v->route.size()-2))+1;
+	int j2 = (rand() % (v->route.size()-2))+1;
+	if (j2 < j1)
+	{
+		int tmp = j1;
+		j1 = j2;
+		j2 = tmp;
+	}
+	// Invert subtour of subroute
+	for (int j = 0; j < ((j1+j2)/2)-j1; j++)
+	{
+		int tmp = v->route[j1+j];
+		v->route[j1+j] = v->route[j2-j];
+		v->route[j2-j] = tmp;
+	}// exit(0);
+	mutation->evaluateLoad(v);
+	if (v->load <= capacity)
+	{
+		ch->free();
+		return mutation;
+	}
+	mutation->free();
+	return ch;
+}
 
-// Inversion Mutation
-// Insertion Mutation
+Chromosome* SimpleGA::insertionMutation(Chromosome* ch)
+{
+	
+}
+
+Chromosome* SimpleGA::displacementMutation(Chromosome* ch)
+{
+	
+}

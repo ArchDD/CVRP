@@ -38,4 +38,7 @@ public:
 	void scx(Chromosome* p1, Chromosome* p2);
 
 	Chromosome* swapMutation(Chromosome* ch);
+	Chromosome* inversionMutation(Chromosome* ch);
+	Chromosome* insertionMutation(Chromosome* ch);
+	Chromosome* displacementMutation(Chromosome* ch);
 };
