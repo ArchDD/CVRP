@@ -67,13 +67,15 @@ void SimpleGA::reproduceOffspring()
 		// Reselect if same chromosome
 		if (c1 != c2)
 		{
-			float p = (float)rand() / RAND_MAX;
+			/*float p = (float)rand() / RAND_MAX;
 			if (p < 0.7f)
 				pmx(c1, c2);
 			else if (p < 0.9f)
 				scx(c1, c2);
 			else
-				vrpCrossover(c1, c2);
+				vrpCrossover(c1, c2);*/
+			ox(c1, c2);
+			//pmx(c1, c2);
 		}
 	}
 	// Free extra chromosomes
@@ -113,14 +115,19 @@ void SimpleGA::replacePopulation()
 		float p = (float)rand() / RAND_MAX;
 		if (p < mutationProbability && population->back() != bestSolution)
 		{
-			/*p = (float)rand() / RAND_MAX;
-			if (p < 0.5f)
+			p = (float)rand() / RAND_MAX;
+			/*if (p < 0.5f)
 				population->back() = swapMutation(population->back());
 			else if (p < 0.75f)
 				population->back() = inversionMutation(population->back());
 			else
 				population->back() = insertionMutation(population->back());*/
-			population->back() = inversionMutation(population->back());
+			//population->back() = inversionMutation(population->back());
+			p = (float)rand() / RAND_MAX;
+			if (p < 0.5f)
+				population->back() = swapMutation(population->back());
+			else
+				population->back() = inversionMutation(population->back());
 		}
 	}
 }
@@ -160,7 +167,7 @@ void SimpleGA::stepGA()
 	clock_t t1 = clock(), t2 = clock(), t3 = clock();
 	float f = 0.0f;
 	int i = 0, batch = 10;
-	float timeLimit = 20.0f * 60.0f, batchTime = 0.0f;
+	float timeLimit = 10.0f * 60.0f, batchTime = 0.0f;
 
 	while (f < timeLimit)
 	{
@@ -684,14 +691,114 @@ void SimpleGA::scx(Chromosome* p1, Chromosome* p2)
 	offsprings.push_back(chromosome);
 }
 
-// Order Crossover
+// A modified order crossover
 void SimpleGA::ox(Chromosome* p1, Chromosome* p2)
 {
-	//
+	p1->evaluateFitness();
+	Chromosome* chromosome = new Chromosome(nodes, dimension, capacity, false);
+	// Copy contents into array of chromosomes without depot
+	int size = dimension-1;
+	int* chromosome1 = (int*)malloc(sizeof(float) * size);
+	int* chromosome2 = (int*)malloc(sizeof(float) * size);
+	int* chromosome3 = (int*)malloc(sizeof(float) * size);
+	int c1 = 0, c2 = 0;
+
+	for (int i = 0; i < p1->genes.size(); i++)
+	{
+		Vehicle *v = p1->genes[i];
+		for (int j = 1; j < v->route.size()-1; j++)
+		{
+			chromosome1[c1] = v->route[j];
+			c1+=1;
+		}
+	}
+	for (int i = 0; i < p2->genes.size(); i++)
+	{
+		Vehicle *v = p2->genes[i];
+		for (int j = 1; j < v->route.size()-1; j++)
+		{
+			chromosome2[c2] = v->route[j];
+			c2+=1;
+		}
+	}
 	// Select a subtour from p1
-	// Remove customers of route from p2
-	// Add route to p2 for the offset
-	// Fill in rest of nodes
+	int start = rand() % size;
+	int end = rand() % size;
+	if (start > end)
+	{
+		int tmp = start;
+		start = end;
+		end = tmp;
+	}
+	// Create a map for quick duplicate check
+	map<int, int> customers;
+	// Copy subtour to offspring
+	for (int i = start; i < end; i++)
+	{
+		int n = chromosome1[i];
+		chromosome3[i] = n;
+		customers[n] = n;
+	}
+	// Fill in rest of nodes with other parent
+	int k = 0, l = 0;
+	while (k < start)
+	{
+		int val = l;
+		int n = chromosome2[l];
+		if (customers.count(n) != 0)
+		{
+			l+=1;
+			n = chromosome2[l];
+		}
+		else
+		{
+			chromosome3[k] = n;
+			k+=1;
+			l+=1;
+		}
+	}
+	k = end;
+	while (k < size)
+	{
+		int n = chromosome2[l];
+		if (customers.count(n) != 0)
+		{
+			l+=1;
+			n = chromosome2[l];
+		}
+		else
+		{
+			chromosome3[k] = n;
+			k+=1;
+			l+=1;
+		}
+	}
+
+	// Repair
+	Vehicle *v = new Vehicle();
+	v->route.push_back(0);
+	v->route.push_back(0);
+	chromosome->genes.push_back(v);
+	for (int i = 0; i < size; i++)
+	{
+		chromosome->evaluateLoad(v);
+		int n = chromosome3[i];
+		if (v->load + (*nodes)[n]->demand <= capacity)
+		{
+			v->route.pop_back();
+			v->route.push_back(n);
+			v->route.push_back(0);
+		}
+		else
+		{
+			v = new Vehicle();
+			v->route.push_back(0);
+			v->route.push_back(n);
+			v->route.push_back(0);
+			chromosome->genes.push_back(v);
+		}
+	}
+	offsprings.push_back(chromosome);
 }
 // Position-Based Crossover
 /*Chromosome* SimpleGA::positionCrossover(Chromosome* p1, Chromosome* p2)
