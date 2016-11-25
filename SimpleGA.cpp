@@ -113,7 +113,8 @@ void SimpleGA::replacePopulation()
 		float p = (float)rand() / RAND_MAX;
 		if (p < mutationProbability && population->back() != bestSolution)
 			//population->back() = swapMutation(population->back());
-			population->back() = inversionMutation(population->back());
+			//population->back() = inversionMutation(population->back());
+			population->back() = insertionMutation(population->back());
 	}
 }
 
@@ -743,7 +744,7 @@ Chromosome* SimpleGA::inversionMutation(Chromosome* ch)
 		int tmp = v->route[j1+j];
 		v->route[j1+j] = v->route[j2-j];
 		v->route[j2-j] = tmp;
-	}// exit(0);
+	}
 	mutation->evaluateLoad(v);
 	if (v->load <= capacity)
 	{
@@ -756,7 +757,47 @@ Chromosome* SimpleGA::inversionMutation(Chromosome* ch)
 
 Chromosome* SimpleGA::insertionMutation(Chromosome* ch)
 {
-	
+	Chromosome* mutation = new Chromosome(ch);
+	// Selct random customer and position
+	int cus = (rand() % dimension-1) + 1;
+	// Remove customer
+	for (int i = 0; i < mutation->genes.size(); i++)
+	{
+		Vehicle *v = mutation->genes[i];
+		for (int j = 1; j < v->route.size()-1; j++)
+		{
+			if (v->route[j]== cus)
+				v->route.erase(v->route.begin() + j);
+		}
+	}	
+	int pos = (rand() % dimension-1) + 1;
+	int c = 0;
+	Vehicle *v;
+	for (int i = 0; i < mutation->genes.size(); i++)
+	{
+		v = mutation->genes[i];
+		for (int j = 1; j < v->route.size()-1; j++)
+		{
+			if (c == pos)
+			{
+				v->route.insert(v->route.begin()+j, cus);
+				mutation->evaluateLoad(v);
+				if (v->load <= capacity)
+				{
+					ch->free();
+					return mutation;
+				}
+				else
+				{
+					mutation->free();
+					return ch;
+				}
+			}
+			c+=1;
+		}
+	}
+	mutation->free();
+	return ch;
 }
 
 Chromosome* SimpleGA::displacementMutation(Chromosome* ch)
