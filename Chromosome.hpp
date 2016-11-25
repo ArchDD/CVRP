@@ -37,13 +37,12 @@ public:
 	Chromosome(vector<Node*>* n, int d, int c, bool init);
 	Chromosome(Chromosome* chromosome);
 	void initialise();
-	void clearRoute();
 	void createSubroute();
 	void appendSubroute();
 	void evaluateFitness();
 	double evaluatePreciseCost();
 	void evaluateProbability();
 	void evaluateLoad(Vehicle* vehicle);
-	bool containsGene(int n);
+	int* getArrayRepresentation(int* chromosome, int size);
 	void free();
 };

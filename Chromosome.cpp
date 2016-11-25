@@ -54,15 +54,6 @@ void Chromosome::initialise()
 	evaluateFitness();
 }
 
-void Chromosome::clearRoute()
-{
-	for (int i = 0; i < genes.size(); i++)
-	{
-		delete(genes[i]);
-	}
-	genes.clear();
-}
-
 void Chromosome::createSubroute()
 {
 	// Random integer in range 1 to customer size
@@ -157,17 +148,19 @@ double Chromosome::evaluatePreciseCost()
 	return c;
 }
 
-bool Chromosome::containsGene(int n)
+int* Chromosome::getArrayRepresentation(int chromosome[], int size)
 {
+	int c = 0;
 	for (int i = 0; i < genes.size(); i++)
 	{
-		for (int j = 1; j < genes[i]->route.size()-1; j++)
+		Vehicle *v = genes[i];
+		for (int j = 1; j < v->route.size()-1; j++)
 		{
-			if (n == genes[i]->route[j])
-				return true;
+			chromosome[c] = v->route[j];
+			c+=1;
 		}
 	}
-	return false;
+	return chromosome;
 }
 
 void Chromosome::free()

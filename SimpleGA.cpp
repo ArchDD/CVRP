@@ -74,8 +74,7 @@ void SimpleGA::reproduceOffspring()
 				scx(c1, c2);
 			else
 				vrpCrossover(c1, c2);*/
-			ox(c1, c2);
-			//pmx(c1, c2);
+			pb(c1, c2);
 		}
 	}
 	// Free extra chromosomes
@@ -167,7 +166,7 @@ void SimpleGA::stepGA()
 	clock_t t1 = clock(), t2 = clock(), t3 = clock();
 	float f = 0.0f;
 	int i = 0, batch = 10;
-	float timeLimit = 10.0f * 60.0f, batchTime = 0.0f;
+	float timeLimit = 1.0f * 20.0f, batchTime = 0.0f;
 
 	while (f < timeLimit)
 	{
@@ -694,33 +693,18 @@ void SimpleGA::scx(Chromosome* p1, Chromosome* p2)
 // A modified order crossover
 void SimpleGA::ox(Chromosome* p1, Chromosome* p2)
 {
-	p1->evaluateFitness();
 	Chromosome* chromosome = new Chromosome(nodes, dimension, capacity, false);
 	// Copy contents into array of chromosomes without depot
 	int size = dimension-1;
-	int* chromosome1 = (int*)malloc(sizeof(float) * size);
-	int* chromosome2 = (int*)malloc(sizeof(float) * size);
-	int* chromosome3 = (int*)malloc(sizeof(float) * size);
-	int c1 = 0, c2 = 0;
+	int chromosome1[size];
+	int chromosome2[size];
+	int chromosome3[size];
+	// Must initialise to non-node values
+	for (int i = 0; i < size; i++)
+		chromosome3[i] = -1;
+	p1->getArrayRepresentation(chromosome1, size);
+	p2->getArrayRepresentation(chromosome2, size);
 
-	for (int i = 0; i < p1->genes.size(); i++)
-	{
-		Vehicle *v = p1->genes[i];
-		for (int j = 1; j < v->route.size()-1; j++)
-		{
-			chromosome1[c1] = v->route[j];
-			c1+=1;
-		}
-	}
-	for (int i = 0; i < p2->genes.size(); i++)
-	{
-		Vehicle *v = p2->genes[i];
-		for (int j = 1; j < v->route.size()-1; j++)
-		{
-			chromosome2[c2] = v->route[j];
-			c2+=1;
-		}
-	}
 	// Select a subtour from p1
 	int start = rand() % size;
 	int end = rand() % size;
@@ -739,75 +723,65 @@ void SimpleGA::ox(Chromosome* p1, Chromosome* p2)
 		chromosome3[i] = n;
 		customers[n] = n;
 	}
-	// Fill in rest of nodes with other parent
-	int k = 0, l = 0;
-	while (k < start)
-	{
-		int val = l;
-		int n = chromosome2[l];
-		if (customers.count(n) != 0)
-		{
-			l+=1;
-			n = chromosome2[l];
-		}
-		else
-		{
-			chromosome3[k] = n;
-			k+=1;
-			l+=1;
-		}
-	}
-	k = end;
-	while (k < size)
-	{
-		int n = chromosome2[l];
-		if (customers.count(n) != 0)
-		{
-			l+=1;
-			n = chromosome2[l];
-		}
-		else
-		{
-			chromosome3[k] = n;
-			k+=1;
-			l+=1;
-		}
-	}
-
-	// Repair
-	Vehicle *v = new Vehicle();
-	v->route.push_back(0);
-	v->route.push_back(0);
-	chromosome->genes.push_back(v);
-	for (int i = 0; i < size; i++)
-	{
-		chromosome->evaluateLoad(v);
-		int n = chromosome3[i];
-		if (v->load + (*nodes)[n]->demand <= capacity)
-		{
-			v->route.pop_back();
-			v->route.push_back(n);
-			v->route.push_back(0);
-		}
-		else
-		{
-			v = new Vehicle();
-			v->route.push_back(0);
-			v->route.push_back(n);
-			v->route.push_back(0);
-			chromosome->genes.push_back(v);
-		}
-	}
+	fillNodes(chromosome3, chromosome2, size, &customers);
+	repair(chromosome, chromosome3, size);
 	offsprings.push_back(chromosome);
 }
-// Position-Based Crossover
-/*Chromosome* SimpleGA::positionCrossover(Chromosome* p1, Chromosome* p2)
+
+void SimpleGA::fillNodes(int chromosome[], int parent[], int size, map<int, int>* existing)
 {
-	// Select set of position from one parent at random
-	// Create child by copying nodes on at positions
-	// Remove set of nodes from other parent
+	// Fill in rest of nodes with other parent
+	int i = 0, j = 0;
+	while (i < size)
+	{
+
+		int a = chromosome[i];
+		int b = parent[j];
+		// Skip existing chromosomes
+		while (existing->count(a) != 0)
+		{
+			i+=1;
+			a = chromosome[i];
+		}
+		while (existing->count(b) != 0)
+		{
+			j+=1;
+			b = parent[j];
+		}
+		
+		chromosome[i] = b;
+		i+=1;
+		j+=1;
+	}
+}
+
+// Position-Based Crossover
+void SimpleGA::pb(Chromosome* p1, Chromosome* p2)
+{
+	Chromosome* chromosome = new Chromosome(nodes, dimension, capacity, false);
+	int size = dimension-1;
+	int chromosome1[size];
+	int chromosome2[size];
+	int chromosome3[size];
+	for (int i = 0; i < size; i++)
+		chromosome3[i] = -1;
+	p1->getArrayRepresentation(chromosome1, size);
+	p2->getArrayRepresentation(chromosome2, size);
+	// Select set of position from one parent at random and set those to offspring
+	map<int, int> customers;
+	int num = rand() % size;
+	for (int i = 0; i < num; i++)
+	{
+		int pos = rand() % size;
+		int n = chromosome1[pos];
+		chromosome3[pos] = n;
+		customers[n] = n;
+	}
 	// Fill in rest of nodes
-}*/
+	fillNodes(chromosome3, chromosome2, size, &customers);
+	repair(chromosome, chromosome3, size);
+	offsprings.push_back(chromosome);
+}
 
 // Cycle (CX) Crossover
 
@@ -912,4 +886,38 @@ Chromosome* SimpleGA::insertionMutation(Chromosome* ch)
 	}
 	mutation->free();
 	return ch;
+}
+
+// Repair strategies
+void SimpleGA::repair(Chromosome* chromosome, int ch[], int size)
+{
+	naiveRepair(chromosome, ch, size);
+}
+
+void SimpleGA::naiveRepair(Chromosome* chromosome, int ch[], int size)
+{
+	// Repair
+	Vehicle *v = new Vehicle();
+	v->route.push_back(0);
+	v->route.push_back(0);
+	chromosome->genes.push_back(v);
+	for (int i = 0; i < size; i++)
+	{
+		chromosome->evaluateLoad(v);
+		int n = ch[i];
+		if (v->load + (*nodes)[n]->demand <= capacity)
+		{
+			v->route.pop_back();
+			v->route.push_back(n);
+			v->route.push_back(0);
+		}
+		else
+		{
+			v = new Vehicle();
+			v->route.push_back(0);
+			v->route.push_back(n);
+			v->route.push_back(0);
+			chromosome->genes.push_back(v);
+		}
+	}
 }
