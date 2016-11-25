@@ -11,13 +11,14 @@ Node::Node()
 	distances = (float*)malloc(sizeof(float) * 250);
 }
 
-Chromosome::Chromosome(vector<Node*>* n, int d, int c)
+Chromosome::Chromosome(vector<Node*>* n, int d, int c, bool init)
 {
 	nodes = n;
 	dimension = d;
 	capacity = c;
-
-	initialise();
+	
+	if (init)
+		initialise();
 }
 
 Chromosome::Chromosome(Chromosome* chromosome)

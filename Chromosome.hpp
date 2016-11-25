@@ -34,7 +34,7 @@ public:
 	float probability;
 	float cost;
 
-	Chromosome(vector<Node*>* n, int d, int c);
+	Chromosome(vector<Node*>* n, int d, int c, bool init);
 	Chromosome(Chromosome* chromosome);
 	void initialise();
 	void clearRoute();

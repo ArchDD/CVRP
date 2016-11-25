@@ -25,7 +25,7 @@ void SimpleGA::generatePopulation()
 	// Chromosome constructors will create random paths
 	for (int i = 0; i < samples; i++)
 	{
-		Chromosome* chromosome = new Chromosome(nodes, dimension, capacity);
+		Chromosome* chromosome = new Chromosome(nodes, dimension, capacity, true);
 		population->push_back(chromosome);
 	}
 }
@@ -112,9 +112,16 @@ void SimpleGA::replacePopulation()
 		// Mutate if not best solution
 		float p = (float)rand() / RAND_MAX;
 		if (p < mutationProbability && population->back() != bestSolution)
-			//population->back() = swapMutation(population->back());
-			//population->back() = inversionMutation(population->back());
-			population->back() = insertionMutation(population->back());
+		{
+			/*p = (float)rand() / RAND_MAX;
+			if (p < 0.5f)
+				population->back() = swapMutation(population->back());
+			else if (p < 0.75f)
+				population->back() = inversionMutation(population->back());
+			else
+				population->back() = insertionMutation(population->back());*/
+			population->back() = inversionMutation(population->back());
+		}
 	}
 }
 
@@ -143,7 +150,7 @@ void SimpleGA::filtration()
 		{
 			filtered[s] = s;
 			(*population)[s]->free();
-			(*population)[s] = new Chromosome(nodes, dimension, capacity);
+			(*population)[s] = new Chromosome(nodes, dimension, capacity, true);
 		}
 	}
 }
@@ -153,7 +160,7 @@ void SimpleGA::stepGA()
 	clock_t t1 = clock(), t2 = clock(), t3 = clock();
 	float f = 0.0f;
 	int i = 0, batch = 10;
-	float timeLimit = 1.0f * 60.0f, batchTime = 0.0f;
+	float timeLimit = 20.0f * 60.0f, batchTime = 0.0f;
 
 	while (f < timeLimit)
 	{
@@ -414,8 +421,7 @@ void SimpleGA::swapGenes(int pos, Chromosome* p1, Chromosome* p2, Chromosome* ch
 
 void SimpleGA::vrpCrossover(Chromosome* p1, Chromosome* p2)
 {
-	Chromosome* chromosome = new Chromosome(p1);
-	chromosome->clearRoute();
+	Chromosome* chromosome = new Chromosome(nodes, dimension, capacity, false);
 
 	// Create selection of customers
 	map<int, int> customers;
@@ -565,8 +571,7 @@ void SimpleGA::vrpCrossover(Chromosome* p1, Chromosome* p2)
 // Sequential Constructive Crossover Operator (SCX)
 void SimpleGA::scx(Chromosome* p1, Chromosome* p2)
 {
-	Chromosome* chromosome = new Chromosome(p1);
-	chromosome->clearRoute();
+	Chromosome* chromosome = new Chromosome(nodes, dimension, capacity, false);
 
 	// Choose first node randomly
 	int node = (rand() % dimension-1) + 1;
@@ -680,12 +685,14 @@ void SimpleGA::scx(Chromosome* p1, Chromosome* p2)
 }
 
 // Order Crossover
-/*Chromosome* SimpleGA::orderCrossover(Chromosome* p1, Chromosome* p2)
+void SimpleGA::ox(Chromosome* p1, Chromosome* p2)
 {
-	// Select a subtour 
-	// Create child by copying the subtour of a parent into corresponding position of it
+	//
+	// Select a subtour from p1
+	// Remove customers of route from p2
+	// Add route to p2 for the offset
 	// Fill in rest of nodes
-}*/
+}
 // Position-Based Crossover
 /*Chromosome* SimpleGA::positionCrossover(Chromosome* p1, Chromosome* p2)
 {
@@ -798,9 +805,4 @@ Chromosome* SimpleGA::insertionMutation(Chromosome* ch)
 	}
 	mutation->free();
 	return ch;
-}
-
-Chromosome* SimpleGA::displacementMutation(Chromosome* ch)
-{
-	
 }
