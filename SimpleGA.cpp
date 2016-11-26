@@ -68,13 +68,19 @@ void SimpleGA::reproduceOffspring()
 		if (c1 != c2)
 		{
 			/*float p = (float)rand() / RAND_MAX;
-			if (p < 0.7f)
+			if (p < 0.5f)
 				pmx(c1, c2);
-			else if (p < 0.9f)
+			else if (p < 0.6f)
 				scx(c1, c2);
+			else if (p < 0.7f)
+				ox(c1, c2);
+			else if (p < 0.8f)
+				cx(c1, c2);
+			else if (p < 0.9f)
+				pb(c1, c2);
 			else
 				vrpCrossover(c1, c2);*/
-			cx(c1, c2);
+			pmx(c1, c2);
 		}
 	}
 	// Free extra chromosomes
@@ -115,18 +121,12 @@ void SimpleGA::replacePopulation()
 		if (p < mutationProbability && population->back() != bestSolution)
 		{
 			p = (float)rand() / RAND_MAX;
-			/*if (p < 0.5f)
-				population->back() = swapMutation(population->back());
+			if (p < 0.5f)
+				population->back() = insertionMutation(population->back());
 			else if (p < 0.75f)
 				population->back() = inversionMutation(population->back());
 			else
-				population->back() = insertionMutation(population->back());*/
-			//population->back() = inversionMutation(population->back());
-			p = (float)rand() / RAND_MAX;
-			if (p < 0.5f)
 				population->back() = swapMutation(population->back());
-			else
-				population->back() = inversionMutation(population->back());
 		}
 	}
 }
@@ -163,10 +163,10 @@ void SimpleGA::filtration()
 
 void SimpleGA::stepGA()
 {
-	clock_t t1 = clock(), t2 = clock(), t3 = clock();
+	clock_t t1 = clock(), t2 = clock();
 	float f = 0.0f;
-	int i = 0, batch = 10;
-	float timeLimit = 1.0f * 20.0f, batchTime = 0.0f;
+	int i = 0;
+	float timeLimit = 1.0f * 60.0f;
 
 	while (f < timeLimit)
 	{
@@ -174,17 +174,13 @@ void SimpleGA::stepGA()
 		replacePopulation();
 		evaluatePopulation();
 		evaluateSolution();
-
-		if (i % batch == 0)
+		i++;
+		if (i % 200 == 0)
 		{
 			t2 = clock() - t1;
 			f = ((float)t2 / CLOCKS_PER_SEC);
-			t3 = clock() - t3;
-			batchTime = ((float)t3 / CLOCKS_PER_SEC);
-		}
-		i++;
-		if (i % 200 == 0)
 			filtration();
+		}
 	}
 	t1 = clock() - t1;
 	printf("Time taken: %f seconds\n", ((float)t1)/CLOCKS_PER_SEC);
@@ -936,7 +932,7 @@ Chromosome* SimpleGA::insertionMutation(Chromosome* ch)
 {
 	Chromosome* mutation = new Chromosome(ch);
 	// Selct random customer and position
-	int cus = (rand() % dimension-1) + 1;
+	int cus = (rand() % (dimension-1)) + 1;
 	// Remove customer
 	for (int i = 0; i < mutation->genes.size(); i++)
 	{
@@ -944,7 +940,15 @@ Chromosome* SimpleGA::insertionMutation(Chromosome* ch)
 		for (int j = 1; j < v->route.size()-1; j++)
 		{
 			if (v->route[j]== cus)
+			{
 				v->route.erase(v->route.begin() + j);
+				// Remove empty routes
+				if (v->route.size() == 2)
+				{
+					delete(v);
+					mutation->genes.erase(mutation->genes.begin() + i);
+				}
+			}
 		}
 	}	
 	int pos = (rand() % dimension-1) + 1;
