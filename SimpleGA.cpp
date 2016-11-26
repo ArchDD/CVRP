@@ -74,7 +74,7 @@ void SimpleGA::reproduceOffspring()
 				scx(c1, c2);
 			else
 				vrpCrossover(c1, c2);*/
-			pb(c1, c2);
+			cx(c1, c2);
 		}
 	}
 	// Free extra chromosomes
@@ -353,76 +353,6 @@ void SimpleGA::pmx(Chromosome* p1, Chromosome* p2)
 		offsprings.push_back(b2);
 	else
 		b2->free();
-}
-
-void SimpleGA::swapGenes(int pos, Chromosome* p1, Chromosome* p2, Chromosome* chromosome)
-{
-	int g1, g2;
-	int i1, i2, i3, i4, j1, j2, j3, j4;
-	int c = 0;
-
-	// Get genes at position
-	for (int i = 0; i < p1->genes.size(); i++)
-	{
-		// Ignore depot
-		for (int j = 1; j < p1->genes[i]->route.size()-1; j++)
-		{
-			if (c < pos)
-				c++;
-			else if (c>=pos)
-			{
-				g1 = p1->genes[i]->route[j];
-				i1 = i;
-				j1 = j;
-				j = p1->genes[i]->route.size()-1;
-			}
-		}
-	}
-
-	c = 0;
-	for (int i = 0; i < p2->genes.size(); i++)
-	{
-		// Ignore depot
-		for (int j = 1; j < p2->genes[i]->route.size()-1; j++)
-		{
-			if (c < pos)
-				c++;
-			else if (c>=pos)
-			{
-				g2 = p2->genes[i]->route[j];
-				i2 = i;
-				j2 = j;
-				j = p2->genes[i]->route.size()-1;
-			}
-		}
-	}
-
-	// Swap chromosome's g1 and g2
-	for (int i = 0; i < chromosome->genes.size(); i++)
-	{
-		// Ignore depot
-		for (int j = 1; j < chromosome->genes[i]->route.size()-1; j++)
-		{
-			if (chromosome->genes[i]->route[j] == g1)
-			{
-				i3 = i;
-				j3 = j;
-			}
-			if (chromosome->genes[i]->route[j] == g2)
-			{
-				i4 = i;
-				j4 = j;
-			}
-		}
-	}
-
-	int tmp = chromosome->genes[i3]->route[j3];
-	chromosome->genes[i3]->route[j3] = chromosome->genes[i4]->route[j4];
-	chromosome->genes[i4]->route[j4] = tmp;
-
-	//Evaluate new load
-	chromosome->evaluateLoad(chromosome->genes[i3]);
-	chromosome->evaluateLoad(chromosome->genes[i4]);
 }
 
 void SimpleGA::vrpCrossover(Chromosome* p1, Chromosome* p2)
@@ -728,33 +658,6 @@ void SimpleGA::ox(Chromosome* p1, Chromosome* p2)
 	offsprings.push_back(chromosome);
 }
 
-void SimpleGA::fillNodes(int chromosome[], int parent[], int size, map<int, int>* existing)
-{
-	// Fill in rest of nodes with other parent
-	int i = 0, j = 0;
-	while (i < size)
-	{
-
-		int a = chromosome[i];
-		int b = parent[j];
-		// Skip existing chromosomes
-		while (existing->count(a) != 0)
-		{
-			i+=1;
-			a = chromosome[i];
-		}
-		while (existing->count(b) != 0)
-		{
-			j+=1;
-			b = parent[j];
-		}
-		
-		chromosome[i] = b;
-		i+=1;
-		j+=1;
-	}
-}
-
 // Position-Based Crossover
 void SimpleGA::pb(Chromosome* p1, Chromosome* p2)
 {
@@ -784,6 +687,192 @@ void SimpleGA::pb(Chromosome* p1, Chromosome* p2)
 }
 
 // Cycle (CX) Crossover
+void SimpleGA::cx(Chromosome* p1, Chromosome* p2)
+{
+	Chromosome* offspring1 = new Chromosome(nodes, dimension, capacity, false);
+	Chromosome* offspring2 = new Chromosome(nodes, dimension, capacity, false);
+	int size = dimension-1;
+	int chromosome1[size];
+	int chromosome2[size];
+	int chromosome3[size];
+	int chromosome4[size];
+	for (int i = 0; i < size; i++)
+	{
+		chromosome3[i] = -1;
+		chromosome4[i] = -1;
+	}
+	p1->getArrayRepresentation(chromosome1, size);
+	p2->getArrayRepresentation(chromosome2, size);
+	// Create maps of value to index for fast lookup
+	map<int, int> m1, m2;
+	for (int i = 0; i < size; i++)
+	{
+		int a = chromosome1[i], b = chromosome2[i];
+		m1[a] = i;
+		m2[b] = i;
+	}
+
+	map<int, int> customers;
+	for (int i = 1; i < dimension; i++)
+		customers[i] = i;
+	// Find cycles
+	vector< vector<int> > cycles1;
+	vector< vector<int> > cycles2;
+	vector< vector<int> > positions;
+	while(!customers.empty())
+	{
+		vector<int> cycle1;
+		vector<int> cycle2;
+		vector<int> position;
+		int i = 0, pos = -1;
+		while(pos == -1)
+		{
+			if (customers.count(chromosome1[i]) != 0)
+				pos = i;
+			i++;
+		}
+		int start = chromosome1[pos];
+		int next1 = start;
+		int next2 = chromosome2[pos];
+		cycle1.push_back(next1);
+		cycle2.push_back(next2);
+		position.push_back(pos);
+		customers.erase(next1);
+		while(start != next2 && !customers.empty())
+		{
+			pos = m1[next2];
+			next1 = chromosome1[pos];
+			next2 = chromosome2[pos];
+			cycle1.push_back(next1);
+			cycle2.push_back(next2);
+			position.push_back(pos);
+			customers.erase(next1);
+		}
+		cycles1.push_back(cycle1);
+		cycles2.push_back(cycle2);
+		positions.push_back(position);
+	}
+	for (int i = 0; i < cycles1.size(); i++)
+	{
+		for (int j = 0; j < cycles1[i].size(); j++)
+		{
+			if (i % 2 == 0)
+			{
+				chromosome3[positions[i][j]] = cycles1[i][j];
+				chromosome4[positions[i][j]] = cycles2[i][j];
+			}
+			else
+			{
+				chromosome3[positions[i][j]] = cycles2[i][j];
+				chromosome4[positions[i][j]] = cycles1[i][j];
+			}
+		}
+	}
+	// Fill in rest of nodes
+	//fillNodes(chromosome3, chromosome2, size, &customers);
+	repair(offspring1, chromosome3, size);
+	//fillNodes(chromosome4, chromosome2, size, &customers);
+	repair(offspring2, chromosome4, size);
+	offsprings.push_back(offspring1);
+	offsprings.push_back(offspring2);
+}
+
+void SimpleGA::swapGenes(int pos, Chromosome* p1, Chromosome* p2, Chromosome* chromosome)
+{
+	int g1, g2;
+	int i1, i2, i3, i4, j1, j2, j3, j4;
+	int c = 0;
+
+	// Get genes at position
+	for (int i = 0; i < p1->genes.size(); i++)
+	{
+		// Ignore depot
+		for (int j = 1; j < p1->genes[i]->route.size()-1; j++)
+		{
+			if (c < pos)
+				c++;
+			else if (c>=pos)
+			{
+				g1 = p1->genes[i]->route[j];
+				i1 = i;
+				j1 = j;
+				j = p1->genes[i]->route.size()-1;
+			}
+		}
+	}
+
+	c = 0;
+	for (int i = 0; i < p2->genes.size(); i++)
+	{
+		// Ignore depot
+		for (int j = 1; j < p2->genes[i]->route.size()-1; j++)
+		{
+			if (c < pos)
+				c++;
+			else if (c>=pos)
+			{
+				g2 = p2->genes[i]->route[j];
+				i2 = i;
+				j2 = j;
+				j = p2->genes[i]->route.size()-1;
+			}
+		}
+	}
+
+	// Swap chromosome's g1 and g2
+	for (int i = 0; i < chromosome->genes.size(); i++)
+	{
+		// Ignore depot
+		for (int j = 1; j < chromosome->genes[i]->route.size()-1; j++)
+		{
+			if (chromosome->genes[i]->route[j] == g1)
+			{
+				i3 = i;
+				j3 = j;
+			}
+			if (chromosome->genes[i]->route[j] == g2)
+			{
+				i4 = i;
+				j4 = j;
+			}
+		}
+	}
+
+	int tmp = chromosome->genes[i3]->route[j3];
+	chromosome->genes[i3]->route[j3] = chromosome->genes[i4]->route[j4];
+	chromosome->genes[i4]->route[j4] = tmp;
+
+	//Evaluate new load
+	chromosome->evaluateLoad(chromosome->genes[i3]);
+	chromosome->evaluateLoad(chromosome->genes[i4]);
+}
+
+void SimpleGA::fillNodes(int chromosome[], int parent[], int size, map<int, int>* existing)
+{
+	// Fill in rest of nodes with other parent
+	int i = 0, j = 0;
+	while (i < size)
+	{
+
+		int a = chromosome[i];
+		int b = parent[j];
+		// Skip existing chromosomes
+		while (existing->count(a) != 0)
+		{
+			i+=1;
+			a = chromosome[i];
+		}
+		while (existing->count(b) != 0)
+		{
+			j+=1;
+			b = parent[j];
+		}
+		
+		chromosome[i] = b;
+		i+=1;
+		j+=1;
+	}
+}
 
 
 // MUTATIONS
