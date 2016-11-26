@@ -34,7 +34,7 @@ public:
 	vector<Chromosome*> rouletteSelection();
 	vector<Chromosome*> tournamentSelection(int n);
 	void pmx(Chromosome* p1, Chromosome* p2);
-	void swapGenes(int i, Chromosome* p1, Chromosome* p2, Chromosome* chromosome);
+	void swapGenes(int g1, int g2, int chromosome[]);
 	void vrpCrossover(Chromosome* p1, Chromosome* p2);
 	void scx(Chromosome* p1, Chromosome* p2);
 	void ox(Chromosome* p1, Chromosome* p2);
@@ -46,7 +46,10 @@ public:
 	Chromosome* swapMutation(Chromosome* ch);
 	Chromosome* inversionMutation(Chromosome* ch);
 	Chromosome* insertionMutation(Chromosome* ch);
+	Chromosome* shuffleMutation(Chromosome* ch);
+	Chromosome* splitMutation(Chromosome* ch);
 
 	void repair(Chromosome* chromosome, int ch[], int size);
 	void naiveRepair(Chromosome* chromosome, int ch[], int size);
+	void inheritanceRepair(Chromosome* chromosome, int ch[], int size);
 };

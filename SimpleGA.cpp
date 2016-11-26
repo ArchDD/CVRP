@@ -62,8 +62,8 @@ void SimpleGA::reproduceOffspring()
 		vector<Chromosome*> parents = tournamentSelection(10);
 		Chromosome* c1 = parents[0];
 		Chromosome* c2 = parents[1];
-
-		if (c1 == NULL || c2 == NULL) printf("Null parents selected\n");
+		c1->setArrayRepresentation();
+		c2->setArrayRepresentation();
 		// Reselect if same chromosome
 		if (c1 != c2)
 		{
@@ -80,7 +80,7 @@ void SimpleGA::reproduceOffspring()
 				pb(c1, c2);
 			else
 				vrpCrossover(c1, c2);*/
-			pmx(c1, c2);
+			scx(c1, c2);
 		}
 	}
 	// Free extra chromosomes
@@ -312,9 +312,13 @@ vector<Chromosome*> SimpleGA::tournamentSelection(int n)
 // PMX crossover is a non-destructive operator
 void SimpleGA::pmx(Chromosome* p1, Chromosome* p2)
 {
+	int size = dimension-1;
+	int *chromosome1 = p1->permutation;
+	int *chromosome2 = p2->permutation;
+
 	// Uniformly select crossover points
-	int begin = (rand() % dimension-1) + 1;
-	int end = (rand() % dimension-1) + 1;
+	int begin = (rand() % (size-1)) + 1;
+	int end = (rand() % (size-1)) + 1;
 	if (begin > end)
 	{
 		int tmp = begin;
@@ -322,33 +326,21 @@ void SimpleGA::pmx(Chromosome* p1, Chromosome* p2)
 		end = begin;
 	}
 
-	Chromosome* b1 = new Chromosome(p1);
-	Chromosome* b2 = new Chromosome(p2);
+	Chromosome* b1 = new Chromosome(nodes, dimension, capacity, false);
+	Chromosome* b2 = new Chromosome(nodes, dimension, capacity, false);
 
 	for (int i = begin; i < end; i++)
 	{
-		swapGenes(i, p1, p2, b1);
-		swapGenes(i, p1, p2, b2);
+		int g1 = chromosome1[i], g2 = chromosome2[i];
+		swapGenes(g1, g2, chromosome1);
+		swapGenes(g1, g2, chromosome2);
 	}
 
-	// Push only evaluated load is acceptable
-	bool acceptable = true;
-	for (int i = 0; i < b1->genes.size(); i++)
-		if (b1->genes[i]->load > capacity)
-			acceptable = false;
-	if (acceptable)
-		offsprings.push_back(b1);
-	else
-		b1->free();
+	repair(b1, chromosome1, size);
+	repair(b2, chromosome2, size);
 
-	acceptable = true;
-	for (int i = 0; i < b2->genes.size(); i++)
-		if (b2->genes[i]->load > capacity)
-			acceptable = false;
-	if (acceptable)
-		offsprings.push_back(b2);
-	else
-		b2->free();
+	offsprings.push_back(b1);
+	offsprings.push_back(b2);
 }
 
 void SimpleGA::vrpCrossover(Chromosome* p1, Chromosome* p2)
@@ -504,15 +496,19 @@ void SimpleGA::vrpCrossover(Chromosome* p1, Chromosome* p2)
 void SimpleGA::scx(Chromosome* p1, Chromosome* p2)
 {
 	Chromosome* chromosome = new Chromosome(nodes, dimension, capacity, false);
-
-	// Choose first node randomly
-	int node = (rand() % dimension-1) + 1;
-
+	int size = dimension-1;
+	// Choose first node of parent 1
+	int *chromosome1 = p1->permutation;
+	int *chromosome2 = p2->permutation;
+	int chromosome3[size];
+	for (int i = 0; i < size; i++)
+		chromosome3[i] = -1;
+	int node = chromosome1[0];
+	chromosome3[0] = node;
 	// Create route map to quickly determine if nodes are already chosen
 	map<int, int> route;
 	route[0] = 0;
 	route[node] = node;
-
 	// Create selection of customers
 	map<int, int> customers;
 	for (int i = 0; i < dimension; i++)
@@ -520,35 +516,26 @@ void SimpleGA::scx(Chromosome* p1, Chromosome* p2)
 	// Remove depot and first random node
 	customers.erase(0);
 	customers.erase(node);
-	int a, b;
-
-	Vehicle* v = new Vehicle();
-	v->route.push_back(0);
-	v->route.push_back(node);
-	v->route.push_back(0);
-	chromosome->genes.push_back(v);
+	int a, b, k = 1;
 
 	while(!customers.empty())
 	{
 		bool found = false, selected = false;
-		for (int i = 0; i < p1->genes.size(); i++)
+		for (int i = 0; i < size; i++)
 		{
-			for (int j = 1; j < p1->genes[i]->route.size()-1; j++)
-			{
 				if (!found)
 				{
-					if (node == p1->genes[i]->route[j])
+					if (node == chromosome1[i])
 						found = true;
 				}
 				else if (!selected)
 				{
-					if (route.count(p1->genes[i]->route[j]) == 0)
+					if (route.count(chromosome1[i]) == 0)
 					{
-						a = p1->genes[i]->route[j];
+						a = chromosome1[i];
 						selected = true;
 					}
 				}
-			}
 		}
 		if (selected == false)
 		{
@@ -559,26 +546,22 @@ void SimpleGA::scx(Chromosome* p1, Chromosome* p2)
 			}
 		}
 
-		found = false;
-		selected = false;
-		for (int i = 0; i < p2->genes.size(); i++)
+		found = false, selected = false;
+		for (int i = 0; i < size; i++)
 		{
-			for (int j = 1; j < p2->genes[i]->route.size()-1; j++)
-			{
 				if (!found)
 				{
-					if (node == p2->genes[i]->route[j])
+					if (node == chromosome2[i])
 						found = true;
 				}
 				else if (!selected)
 				{
-					if (route.count(p2->genes[i]->route[j]) == 0)
+					if (route.count(chromosome2[i]) == 0)
 					{
-						b = p2->genes[i]->route[j];
+						b = chromosome2[i];
 						selected = true;
 					}
 				}
-			}
 		}
 		if (selected == false)
 		{
@@ -595,24 +578,13 @@ void SimpleGA::scx(Chromosome* p1, Chromosome* p2)
 		else
 			c = b;
 
-		chromosome->evaluateLoad(v);
-		if (v->load + (*nodes)[c]->demand <= capacity)
-		{
-			v->route.pop_back();
-			v->route.push_back(c);
-			v->route.push_back(0);
-		}
-		else
-		{
-			v = new Vehicle();
-			v->route.push_back(0);
-			v->route.push_back(c);
-			v->route.push_back(0);
-			chromosome->genes.push_back(v);
-		}
+		node = c;
+		chromosome3[k] = c;
 		route[c] = c;
 		customers.erase(c);
+		k+=1;
 	}
+	repair(chromosome, chromosome3, size);
 	offsprings.push_back(chromosome);
 }
 
@@ -622,14 +594,12 @@ void SimpleGA::ox(Chromosome* p1, Chromosome* p2)
 	Chromosome* chromosome = new Chromosome(nodes, dimension, capacity, false);
 	// Copy contents into array of chromosomes without depot
 	int size = dimension-1;
-	int chromosome1[size];
-	int chromosome2[size];
+	int *chromosome1 = p1->permutation;
+	int *chromosome2 = p2->permutation;
 	int chromosome3[size];
 	// Must initialise to non-node values
 	for (int i = 0; i < size; i++)
 		chromosome3[i] = -1;
-	p1->getArrayRepresentation(chromosome1, size);
-	p2->getArrayRepresentation(chromosome2, size);
 
 	// Select a subtour from p1
 	int start = rand() % size;
@@ -659,13 +629,11 @@ void SimpleGA::pb(Chromosome* p1, Chromosome* p2)
 {
 	Chromosome* chromosome = new Chromosome(nodes, dimension, capacity, false);
 	int size = dimension-1;
-	int chromosome1[size];
-	int chromosome2[size];
+	int *chromosome1 = p1->permutation;
+	int *chromosome2 = p2->permutation;
 	int chromosome3[size];
 	for (int i = 0; i < size; i++)
 		chromosome3[i] = -1;
-	p1->getArrayRepresentation(chromosome1, size);
-	p2->getArrayRepresentation(chromosome2, size);
 	// Select set of position from one parent at random and set those to offspring
 	map<int, int> customers;
 	int num = rand() % size;
@@ -688,8 +656,8 @@ void SimpleGA::cx(Chromosome* p1, Chromosome* p2)
 	Chromosome* offspring1 = new Chromosome(nodes, dimension, capacity, false);
 	Chromosome* offspring2 = new Chromosome(nodes, dimension, capacity, false);
 	int size = dimension-1;
-	int chromosome1[size];
-	int chromosome2[size];
+	int *chromosome1 = p1->permutation;
+	int *chromosome2 = p2->permutation;
 	int chromosome3[size];
 	int chromosome4[size];
 	for (int i = 0; i < size; i++)
@@ -697,8 +665,6 @@ void SimpleGA::cx(Chromosome* p1, Chromosome* p2)
 		chromosome3[i] = -1;
 		chromosome4[i] = -1;
 	}
-	p1->getArrayRepresentation(chromosome1, size);
-	p2->getArrayRepresentation(chromosome2, size);
 	// Create maps of value to index for fast lookup
 	map<int, int> m1, m2;
 	for (int i = 0; i < size; i++)
@@ -773,74 +739,21 @@ void SimpleGA::cx(Chromosome* p1, Chromosome* p2)
 	offsprings.push_back(offspring2);
 }
 
-void SimpleGA::swapGenes(int pos, Chromosome* p1, Chromosome* p2, Chromosome* chromosome)
+void SimpleGA::swapGenes(int g1, int g2, int chromosome[])
 {
-	int g1, g2;
-	int i1, i2, i3, i4, j1, j2, j3, j4;
-	int c = 0;
-
-	// Get genes at position
-	for (int i = 0; i < p1->genes.size(); i++)
+	int x, y, size = dimension-1;
+	// Locate positions of genes
+	for (int i = 0; i < size; i++)
 	{
-		// Ignore depot
-		for (int j = 1; j < p1->genes[i]->route.size()-1; j++)
-		{
-			if (c < pos)
-				c++;
-			else if (c>=pos)
-			{
-				g1 = p1->genes[i]->route[j];
-				i1 = i;
-				j1 = j;
-				j = p1->genes[i]->route.size()-1;
-			}
-		}
+		if (chromosome[i] == g1)
+			x = i;
+		if (chromosome[i] == g2)
+			y = i;
 	}
 
-	c = 0;
-	for (int i = 0; i < p2->genes.size(); i++)
-	{
-		// Ignore depot
-		for (int j = 1; j < p2->genes[i]->route.size()-1; j++)
-		{
-			if (c < pos)
-				c++;
-			else if (c>=pos)
-			{
-				g2 = p2->genes[i]->route[j];
-				i2 = i;
-				j2 = j;
-				j = p2->genes[i]->route.size()-1;
-			}
-		}
-	}
-
-	// Swap chromosome's g1 and g2
-	for (int i = 0; i < chromosome->genes.size(); i++)
-	{
-		// Ignore depot
-		for (int j = 1; j < chromosome->genes[i]->route.size()-1; j++)
-		{
-			if (chromosome->genes[i]->route[j] == g1)
-			{
-				i3 = i;
-				j3 = j;
-			}
-			if (chromosome->genes[i]->route[j] == g2)
-			{
-				i4 = i;
-				j4 = j;
-			}
-		}
-	}
-
-	int tmp = chromosome->genes[i3]->route[j3];
-	chromosome->genes[i3]->route[j3] = chromosome->genes[i4]->route[j4];
-	chromosome->genes[i4]->route[j4] = tmp;
-
-	//Evaluate new load
-	chromosome->evaluateLoad(chromosome->genes[i3]);
-	chromosome->evaluateLoad(chromosome->genes[i4]);
+	int tmp = chromosome[x];
+	chromosome[x] = chromosome[y];
+	chromosome[y] = tmp;
 }
 
 void SimpleGA::fillNodes(int chromosome[], int parent[], int size, map<int, int>* existing)
@@ -1013,4 +926,4 @@ void SimpleGA::naiveRepair(Chromosome* chromosome, int ch[], int size)
 			chromosome->genes.push_back(v);
 		}
 	}
-}
+;}
