@@ -1,18 +1,14 @@
 #include "SimpleGA.hpp"
 #include <cstdio>
 #include <iostream>
-#include <fstream>
-#include <string>
-#include <sstream>
 #include <limits>
 #include <algorithm>
 #include <ctime>
 #include <map>
 #include <iterator>
 
-SimpleGA::SimpleGA(vector<Chromosome*>* p, vector<Node*>* n, int d, int c)
+SimpleGA::SimpleGA(vector<Node*>* n, int d, int c)
 {
-	population = p;
 	nodes = n;
 	dimension = d;
 	capacity = c;
@@ -26,7 +22,7 @@ void SimpleGA::generatePopulation()
 	for (int i = 0; i < samples; i++)
 	{
 		Chromosome* chromosome = new Chromosome(nodes, dimension, capacity, true);
-		population->push_back(chromosome);
+		population.push_back(chromosome);
 	}
 }
 
@@ -36,8 +32,8 @@ void SimpleGA::evaluatePopulation()
 	float c = numeric_limits<float>::max();
 	for (int i = 0; i < samples; i++)
 	{
-		Chromosome* chromosome = (*population)[i];
-		(*population)[i]->evaluateFitness();
+		Chromosome* chromosome = population[i];
+		population[i]->evaluateFitness();
 		if (chromosome->cost < c)
 		{
 			c = chromosome->cost;
@@ -50,13 +46,13 @@ void SimpleGA::evaluatePopulation()
 	for (int i = 0; i < samples; i++)
 	{
 		// Aggregate total fitness
-		totalFitness += (*population)[i]->fitness;
+		totalFitness += population[i]->fitness;
 	}
 
 	// Determine probability
 	for (int i = 0; i < samples; i++)
 	{
-		Chromosome* c = (*population)[i];
+		Chromosome* c = population[i];
 		c->probability = c->fitness / totalFitness;
 	}*/
 }
@@ -66,7 +62,6 @@ void SimpleGA::reproduceOffspring()
 	// Select parents
 	while(offsprings.size() < samples)
 	{
-		//vector<Chromosome*> parents = rouletteSelection();
 		vector<Chromosome*> parents = tournamentSelection(10);
 		Chromosome* c1 = parents[0];
 		Chromosome* c2 = parents[1];
@@ -114,26 +109,26 @@ void SimpleGA::replacePopulation()
 {
 	for (int i = samples-1; i >=0; i--)
 	{
-		population->back()->free();
-		population->pop_back();
+		population.back()->free();
+		population.pop_back();
 	}
 
 	for (int i = samples-1; i >=0; i--)
 	{
-		population->push_back(offsprings.back());
+		population.push_back(offsprings.back());
 		offsprings.pop_back();
 
 		// Mutate if not best solution
 		float p = (float)rand() / RAND_MAX;
-		if (p < mutationProbability && population->back() != bestSolution)
+		if (p < mutationProbability && population.back() != bestSolution)
 		{
 			p = (float)rand() / RAND_MAX;
 			if (p < 0.5f)
-				population->back() = insertionMutation(population->back());
+				population.back() = insertionMutation(population.back());
 			else if (p < 0.75f)
-				population->back() = inversionMutation(population->back());
+				population.back() = inversionMutation(population.back());
 			else
-				population->back() = swapMutation(population->back());
+				population.back() = swapMutation(population.back());
 		}
 	}
 }
@@ -145,18 +140,18 @@ void SimpleGA::filtration()
 	while(filtered.size() < samples/10)
 	{
 		int s = rand() % samples;
-		if (filtered.count(s) == 0 && (*population)[s] != bestSolution)
+		if (filtered.count(s) == 0 && population[s] != bestSolution)
 		{
 			filtered[s] = s;
-			(*population)[s]->free();
-			(*population)[s] = new Chromosome(nodes, dimension, capacity, true);
+			population[s]->free();
+			population[s] = new Chromosome(nodes, dimension, capacity, true);
 		}
 	}
 }
 
 void SimpleGA::stepGA()
 {
-	clock_t t1 = clock(), t2 = clock();
+	clock_t t1 = clock(), t2 = clock(), t3 = clock();
 	float f = 0.0f;
 	int i = 0;
 	float timeLimit = 1.0f * 20.0f;
@@ -164,10 +159,12 @@ void SimpleGA::stepGA()
 	while (f < timeLimit)
 	{
 		reproduceOffspring();
+		//t3 = clock() - t3; printf("reproduce %f seconds\n", ((float)t3/CLOCKS_PER_SEC)); t3 = clock();
 		replacePopulation();
+		//t3 = clock() - t3; printf("replace %f seconds\n", ((float)t3/CLOCKS_PER_SEC)); t3 = clock();
 		evaluatePopulation();
 		i++;
-		if (i % 200 == 0)
+		if (i % 1 == 0)
 		{
 			t2 = clock() - t1;
 			f = ((float)t2 / CLOCKS_PER_SEC);
@@ -179,46 +176,6 @@ void SimpleGA::stepGA()
 	printf("Iterations completed: %d\n", i);
 }
 
-void SimpleGA::writeResult()
-{
-	printf("Writing result\n");
-
-	ofstream file;
-	file.setf(ios::fixed,ios::floatfield);
-	file.precision(3);
-
-	file.open("best-solution.txt", ofstream::out | ofstream::trunc);
-	file << "login dd13282 61545\n";
-	file << "name Dillon Keith Diep\n";
-	file << "algorithm Genetic Algorithm\n";
-	double cost = bestSolution->evaluatePreciseCost();
-	file << "cost " << cost <<endl;
-
-	printf("Best Cost: %f\n", cost);
-
-	string n;
-	stringstream convert;
-
-	for (int i = 0; i < bestSolution->genes.size(); i++)
-	{
-		//printf("Vehicle: %d\n", i+1);
-		//printf("Route Length: %d\n", bestSolution->genes[i]->route.size());
-		string s = "";
-		for (int j = 0; j < bestSolution->genes[i]->route.size(); j++)
-		{
-			convert << (bestSolution->genes[i]->route[j]+1);
-			n = convert.str();
-			convert.str("");
-			convert.clear();
-			s = s + n + "->";
-		}
-		s = s.substr(0, s.size()-2);
-		file << s + "\n";
-	}
-
-	file.close();
-}
-
 void SimpleGA::run()
 {
 	printf("Starting simple genetic algorithm\n");
@@ -228,8 +185,27 @@ void SimpleGA::run()
 	// Loop
 	stepGA();
 	// End
-	writeResult();
 	printf("Ending simple genetic algorithm\n");
+}
+
+void SimpleGA::start()
+{
+	// Generate initial population
+	generatePopulation();
+	evaluatePopulation();
+}
+
+void SimpleGA::step(int n)
+{
+	for (int i = 0; i < n; i++)
+	{
+		reproduceOffspring();
+		//t3 = clock() - t3; printf("reproduce %f seconds\n", ((float)t3/CLOCKS_PER_SEC)); t3 = clock();
+		replacePopulation();
+		//t3 = clock() - t3; printf("replace %f seconds\n", ((float)t3/CLOCKS_PER_SEC)); t3 = clock();
+		evaluatePopulation();
+	}
+	filtration();
 }
 
 // SELECTIONS
@@ -243,7 +219,7 @@ vector<Chromosome*> SimpleGA::rouletteSelection()
 
 	for (int i = 0; i < samples; i++)
 	{
-		Chromosome* c = (*population)[i];
+		Chromosome* c = population[i];
 		if (p1 > p && p1 < p+c->probability)
 			c1 = c;
 		if (p2 > p && p2 < p+c->probability)
@@ -263,8 +239,8 @@ vector<Chromosome*> SimpleGA::tournamentSelection(int n)
 	
 	while (selection.size() < n)
 	{
-		int v = rand() % population->size();
-		Chromosome* c = (*population)[v];
+		int v = rand() % population.size();
+		Chromosome* c = population[v];
 		bool contains = false;
 		for (int i = 0; i < selection.size(); i++)
 			if (selection[i] == c)
@@ -1058,5 +1034,13 @@ void SimpleGA::inheritanceRepair(Chromosome* chromosome, Chromosome* p1, Chromos
 			split(chromosome, v1, i);
 		}
 		i++;
+	}
+}
+
+void SimpleGA::free()
+{
+	for (int i = 0; i < population.size(); i++)
+	{
+		population[i]->free();
 	}
 }

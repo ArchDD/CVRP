@@ -7,7 +7,7 @@ using namespace std;
 class SimpleGA
 {
 private:
-	vector<Chromosome*>* population;
+	vector<Chromosome*> population;
 	vector<Chromosome*> offsprings;
 	vector<Node*>* nodes;
 	int dimension;
@@ -16,18 +16,18 @@ private:
 	int samples;
 	int generations;
 	float mutationProbability;
-
-	Chromosome* bestSolution;
 public:
-	SimpleGA(vector<Chromosome*>* p, vector<Node*>* n, int d, int c);
+	Chromosome* bestSolution;
+	SimpleGA(vector<Node*>* n, int d, int c);
 	void generatePopulation();
 	void evaluatePopulation();
 	void reproduceOffspring();
 	void replacePopulation();
 	void stepGA();
 	void filtration();
-	void writeResult();
 	void run();
+	void start();
+	void step(int n);
 
 
 	vector<Chromosome*> rouletteSelection();
@@ -53,4 +53,6 @@ public:
 	void greedyRepair(Chromosome* chromosome, int ch[], int size);
 	void inheritanceRepair(Chromosome* chromosome, Chromosome* p1, Chromosome* p2, int ch[]);
 	void randomRepair(Chromosome* chromosome, int ch[], int size);
+
+	void free();
 };

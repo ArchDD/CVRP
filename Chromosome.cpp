@@ -30,9 +30,7 @@ Chromosome::Chromosome(Chromosome* chromosome)
 
 	for (int i = 0; i < chromosome->genes.size(); i++)
 	{
-		Vehicle* v = new Vehicle(nodes);
-		v->route = chromosome->genes[i]->route;
-		v->load = chromosome->genes[i]->load;
+		Vehicle* v = new Vehicle(chromosome->genes[i]);
 		genes.push_back(v);
 	}
 }
