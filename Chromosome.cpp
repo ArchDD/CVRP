@@ -44,13 +44,14 @@ void Chromosome::initialise()
 	// Create copy of customers for gene pool
 	for (int i = 0; i < nodes->size(); i++)
 		customers.push_back(i);
-
+	createSubroute();
 	while (customers.size() > 1)
 	{
-		createSubroute();
 		appendSubroute();
 	}
-
+	if (genes.back()->route.back() != 0)
+			genes.back()->route.push_back(0);
+	customers.clear();
 	evaluateFitness();
 }
 
@@ -62,7 +63,6 @@ void Chromosome::createSubroute()
 	Vehicle* v = new Vehicle();
 	v->route.push_back(0);
 	v->route.push_back(n);
-	v->route.push_back(0);
 	genes.push_back(v);
 	customers.erase(customers.begin()+i);
 }
@@ -81,14 +81,12 @@ void Chromosome::appendSubroute()
 	evaluateLoad(genes[i]);
 	if (genes[i]->load + (*nodes)[n]->demand > capacity)
 	{
+		genes[i]->route.push_back(0);
 		createSubroute();
 	}
 	else
 	{
-		// Remove last 0, then add j and 0 again (O(1) operators)
-		genes[i]->route.pop_back();
 		genes[i]->route.push_back(n);
-		genes[i]->route.push_back(0);
 		customers.erase(customers.begin()+j);
 		appendSubroute();
 	}
