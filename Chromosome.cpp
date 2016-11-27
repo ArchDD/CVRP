@@ -148,7 +148,7 @@ double Chromosome::evaluatePreciseCost()
 	return c;
 }
 
-int* Chromosome::getArrayRepresentation(int chromosome[], int size)
+void Chromosome::setArrayRepresentation()
 {
 	int c = 0;
 	for (int i = 0; i < genes.size(); i++)
@@ -156,11 +156,10 @@ int* Chromosome::getArrayRepresentation(int chromosome[], int size)
 		Vehicle *v = genes[i];
 		for (int j = 1; j < v->route.size()-1; j++)
 		{
-			chromosome[c] = v->route[j];
+			permutation[c] = v->route[j];
 			c+=1;
 		}
 	}
-	return chromosome;
 }
 
 void Chromosome::free()

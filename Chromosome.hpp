@@ -29,6 +29,7 @@ protected:
 	int capacity;
 	vector<Node*>* nodes;
 public:
+	int permutation[249];
 	vector<Vehicle*> genes;
 	float fitness;
 	float probability;
@@ -43,6 +44,6 @@ public:
 	double evaluatePreciseCost();
 	void evaluateProbability();
 	void evaluateLoad(Vehicle* vehicle);
-	int* getArrayRepresentation(int* chromosome, int size);
+	void setArrayRepresentation();
 	void free();
 };
