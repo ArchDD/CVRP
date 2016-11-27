@@ -48,6 +48,7 @@ public:
 	Chromosome* insertionMutation(Chromosome* ch);
 	Chromosome* shuffleMutation(Chromosome* ch);
 	Chromosome* splitMutation(Chromosome* ch);
+	void split(Chromosome* chromosome, Vehicle* v1, int i);
 
 	void repair(Chromosome* chromosome, Chromosome* p1, Chromosome* p2, int ch[], int size);
 	void greedyRepair(Chromosome* chromosome, int ch[], int size);

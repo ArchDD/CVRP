@@ -80,7 +80,6 @@ void SimpleGA::reproduceOffspring()
 				cx(c1, c2);
 			else
 				vrpCrossover(c1, c2);
-			//scx(c1, c2);
 		}
 	}
 	// Free extra chromosomes
@@ -408,9 +407,7 @@ void SimpleGA::vrpCrossover(Chromosome* p1, Chromosome* p2)
 			float f1 = (float)s1;
 			float f2 = (float)s2;
 			float p1 = f2 / (f1 + f2);
-			//float p2 = f1 / (f1 + f2);
 			float p = (float)rand() / RAND_MAX;
-			//printf("p %f p1 %f\n", p , p1);
 			if (p < p1)
 			{
 				v3 = v1;
@@ -455,7 +452,6 @@ void SimpleGA::vrpCrossover(Chromosome* p1, Chromosome* p2)
 		{
 			Vehicle* v = new Vehicle();
 			v->route.push_back(0);
-			v->route.push_back(0);
 			bool overCapacity = false;
 			while(customers.size() > 0 && overCapacity == false)
 			{
@@ -467,9 +463,7 @@ void SimpleGA::vrpCrossover(Chromosome* p1, Chromosome* p2)
 				chromosome->evaluateLoad(v);
 				if (v->load + (*nodes)[j]->demand <= capacity)
 				{
-					v->route.pop_back();
 					v->route.push_back(j);
-					v->route.push_back(0);
 					customers.erase(j);
 				}
 				else
@@ -477,6 +471,7 @@ void SimpleGA::vrpCrossover(Chromosome* p1, Chromosome* p2)
 					overCapacity = true;
 				}
 			}
+			v->route.push_back(0);
 			chromosome->genes.push_back(v);
 		}
 	}
@@ -893,23 +888,71 @@ Chromosome* SimpleGA::insertionMutation(Chromosome* ch)
 	return ch;
 }
 
+void SimpleGA::split(Chromosome* chromosome, Vehicle* v1, int i)
+{
+	// Split by two or three
+	int p = (float)rand()/RAND_MAX;
+	if (p > 0.5f)
+	{
+		Vehicle* v2 = new Vehicle();
+		chromosome->genes.insert(chromosome->genes.begin()+i, v2);
+		int s = v1->route.size()-2;
+		v1->route.pop_back();
+		v2->route.push_back(0);
+		for (int j = s; j > s/2; j--)
+		{
+			int n = v1->route.back();
+			v1->route.pop_back();
+			v2->route.push_back(n);
+		}
+		v1->route.push_back(0);
+		v2->route.push_back(0);
+	}
+	else
+	{
+		Vehicle* v2 = new Vehicle();
+		Vehicle* v3 = new Vehicle();
+		chromosome->genes.insert(chromosome->genes.begin()+i, v2);
+		chromosome->genes.insert(chromosome->genes.begin()+i+1, v3);
+		int s = v1->route.size()-2;
+		v1->route.pop_back();
+		v2->route.push_back(0);
+		v3->route.push_back(0);
+		for (int j = s; j > (2*s)/3; j--)
+		{
+			int n = v1->route.back();
+			v1->route.pop_back();
+			v2->route.push_back(n);
+		}
+		for (int j = (2*s)/3; j > s/3; j--)
+		{
+			int n = v1->route.back();
+			v1->route.pop_back();
+			v3->route.push_back(n);
+		}
+		v1->route.push_back(0);
+		v2->route.push_back(0);
+		v3->route.push_back(0);
+	}
+}
+
 // Repair strategies
 void SimpleGA::repair(Chromosome* chromosome, Chromosome* p1, Chromosome* p2, int ch[], int size)
 {
-	/*float p = (float)rand() / RAND_MAX;
-	if (p < 0.8f)
+	float p = (float)rand() / RAND_MAX;
+	if (p > 0.6f)
 		greedyRepair(chromosome, ch, size);
+	else if (p > 0.8f)
+		randomRepair(chromosome, ch, size);
 	else
-		randomRepair(chromosome, ch, size);*/
-	inheritanceRepair(chromosome, p1, p2, ch);
-	//randomRepair(chromosome, ch, size);
+		inheritanceRepair(chromosome, p1, p2, ch);
+	//greedyRepair(chromosome, ch, size);
 }
 
 void SimpleGA::greedyRepair(Chromosome* chromosome, int ch[], int size)
 {
 	// Repair
 	Vehicle *v = new Vehicle();
-	v->route.push_back(0);
 	v->route.push_back(0);
 	chromosome->genes.push_back(v);
 	for (int i = 0; i < size; i++)
@@ -918,26 +961,25 @@ void SimpleGA::greedyRepair(Chromosome* chromosome, int ch[], int size)
 		int n = ch[i];
 		if (v->load + (*nodes)[n]->demand <= capacity)
 		{
-			v->route.pop_back();
 			v->route.push_back(n);
-			v->route.push_back(0);
 		}
 		else
 		{
+			v->route.push_back(0);
 			v = new Vehicle();
 			v->route.push_back(0);
 			v->route.push_back(n);
-			v->route.push_back(0);
 			chromosome->genes.push_back(v);
 		}
 	}
+	if (v->route.back() != 0)
+		v->route.push_back(0);
 }
 
 void SimpleGA::randomRepair(Chromosome* chromosome, int ch[], int size)
 {
 	// Repair
 	Vehicle *v = new Vehicle();
-	v->route.push_back(0);
 	v->route.push_back(0);
 	chromosome->genes.push_back(v);
 	int cap = capacity/2 + ((rand() % (capacity/2))+1);
@@ -947,20 +989,20 @@ void SimpleGA::randomRepair(Chromosome* chromosome, int ch[], int size)
 		int n = ch[i];
 		if (v->load + (*nodes)[n]->demand <= cap)
 		{
-			v->route.pop_back();
 			v->route.push_back(n);
-			v->route.push_back(0);
 		}
 		else
 		{
 			cap = capacity/2 + ((rand() % (capacity/2))+1);
+			v->route.push_back(0);
 			v = new Vehicle();
 			v->route.push_back(0);
 			v->route.push_back(n);
-			v->route.push_back(0);
 			chromosome->genes.push_back(v);
 		}
 	}
+	if (v->route.back() != 0)
+		v->route.push_back(0);
 }
 
 void SimpleGA::inheritanceRepair(Chromosome* chromosome, Chromosome* p1, Chromosome* p2, int ch[])
@@ -1010,7 +1052,7 @@ void SimpleGA::inheritanceRepair(Chromosome* chromosome, Chromosome* p1, Chromos
 	}
 	// Create subroutes of remaining
 	bool create = true;
-	Vehicle* v;
+	Vehicle* v = NULL;
 	for (int i = 0; i < size; i++)
 	{
 		if (customers.count(ch[i]) != 0)
@@ -1022,19 +1064,22 @@ void SimpleGA::inheritanceRepair(Chromosome* chromosome, Chromosome* p1, Chromos
 				chromosome->genes.push_back(v);
 				v->route.push_back(0);
 				v->route.push_back(ch[i]);
-				v->route.push_back(0);
 			}
 			else
 			{
-				v->route.pop_back();
 				v->route.push_back(ch[i]);
-				v->route.push_back(0);
 			}
 			customers.erase(ch[i]);
 		}
 		else
+		{
+			if (create == false)
+				v->route.push_back(0);
 			create = true;
+		}
 	}
+	if (v != NULL && v->route.back() != 0)
+		v->route.push_back(0);
 
 	// Split routes that are over capacity;
 	int i = 0;
@@ -1044,20 +1089,7 @@ void SimpleGA::inheritanceRepair(Chromosome* chromosome, Chromosome* p1, Chromos
 		chromosome->evaluateLoad(v1);
 		while (v1->load > capacity)
 		{
-			// Divide by two or three
-			Vehicle* v2 = new Vehicle();
-			chromosome->genes.push_back(v2);
-			int s = v1->route.size()-2;
-			v1->route.pop_back();
-			v2->route.push_back(0);
-			for (int j = s; j > s/2; j--)
-			{
-				int n = v1->route.back();
-				v1->route.pop_back();
-				v2->route.push_back(n);
-			}
-			v1->route.push_back(0);
-			v2->route.push_back(0);
+			split(chromosome, v1, i);
 			chromosome->evaluateLoad(v1);
 		}
 		i++;

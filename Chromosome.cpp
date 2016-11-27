@@ -115,7 +115,8 @@ void Chromosome::evaluateFitness()
 void Chromosome::evaluateLoad(Vehicle* vehicle)
 {
 	int load = 0;
-	for (int i = 1; i < vehicle->route.size()-1; i++)
+	if (vehicle->route.size() <= 2) vehicle->load = 0;
+	for (int i = 0; i < vehicle->route.size(); i++)
 	{
 		int n = vehicle->route[i];
 		load += (*nodes)[n]->demand;

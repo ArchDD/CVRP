@@ -16,8 +16,8 @@ class Vehicle
 public:
 	int load;
 	vector<int> route;
-	Vehicle() {};
-	Vehicle(Vehicle* v) { load = v->load; route = v->route; };
+	Vehicle() { load = 0; }
+	Vehicle(Vehicle* v) { load = v->load; route = v->route; }
 };
 
 class Chromosome
