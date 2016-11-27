@@ -111,8 +111,6 @@ void writeResult()
 
 	for (int i = 0; i < bestSolution->genes.size(); i++)
 	{
-		//printf("Vehicle: %d\n", i+1);
-		//printf("Route Length: %d\n", bestSolution->genes[i]->route.size());
 		string s = "";
 		for (int j = 0; j < bestSolution->genes[i]->route.size(); j++)
 		{
@@ -155,29 +153,38 @@ int main()
 
 	bestSolution = new Chromosome(&nodes, dimension, capacity, true);
 
+	int NUM_THREADS = omp_get_max_threads();
+	omp_set_num_threads(NUM_THREADS);
+	printf("Threads available: %d\n", NUM_THREADS);
 
-	int n = 8;
+	int n = NUM_THREADS, p = 256;
 	SimpleGA* simpleGA[n];
 
-	printf("Starting %d genetic algorithms.\n", n);
+	printf("Starting %d genetic algorithm instances.\n", n);
 	for (int i = 0; i < n; i++)
 	{
-		simpleGA[i] = new SimpleGA(&nodes, dimension, capacity);
+		simpleGA[i] = new SimpleGA(&nodes, dimension, capacity, p);
 		simpleGA[i]->start();
 	}
 
 	printf("Parallel processing...\n");
-	double timeLimit = 1.0 * 10.0, t = 0.0;
-	int iterations = 0, steps = 20;
+	double timeLimit = 1.0 * 60.0, t = 0.0;
+	int iterations = 0, steps = 100;
+
 	while(t < timeLimit)
 	{
-		#pragma omp parallel for
+		//#pragma omp parallel for
+		#pragma omp parallel for schedule(auto)
 		for (int i = 0; i < n; i++)
 		{
-			simpleGA[i]->step(steps);
+			for (int j = 0; j < steps; j++)
+				simpleGA[i]->step();
+			if (iterations % (steps*5) == 0)
+				simpleGA[i]->filtration();
 		}
 
-		iterations += 200;
+		iterations += steps;
+
 		gettimeofday(&timstr,NULL);
 		toc = timstr.tv_sec+(timstr.tv_usec/1000000.0);
 		t = toc-tic;
@@ -198,6 +205,7 @@ int main()
 	writeResult();
 	printf("Elapsed time:\t\t\t\t%.2f (s)\n", toc-tic);
 	printf("Number of parallel GAs ran:\t\t%d\n", n);
+	printf("Population size:\t\t\t%d\n", p);
 	printf("Iterations completed:\t\t\t%d\n", iterations);
 	printf("Best solution cost:\t\t\t%.3f\n", bestSolution->evaluatePreciseCost());
 	

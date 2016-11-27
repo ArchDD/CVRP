@@ -7,12 +7,12 @@
 #include <map>
 #include <iterator>
 
-SimpleGA::SimpleGA(vector<Node*>* n, int d, int c)
+SimpleGA::SimpleGA(vector<Node*>* n, int d, int c, int p)
 {
 	nodes = n;
 	dimension = d;
 	capacity = c;
-	samples = 100;
+	samples = p;
 	mutationProbability = 0.2f;
 }
 
@@ -149,45 +149,6 @@ void SimpleGA::filtration()
 	}
 }
 
-void SimpleGA::stepGA()
-{
-	clock_t t1 = clock(), t2 = clock(), t3 = clock();
-	float f = 0.0f;
-	int i = 0;
-	float timeLimit = 1.0f * 20.0f;
-
-	while (f < timeLimit)
-	{
-		reproduceOffspring();
-		//t3 = clock() - t3; printf("reproduce %f seconds\n", ((float)t3/CLOCKS_PER_SEC)); t3 = clock();
-		replacePopulation();
-		//t3 = clock() - t3; printf("replace %f seconds\n", ((float)t3/CLOCKS_PER_SEC)); t3 = clock();
-		evaluatePopulation();
-		i++;
-		if (i % 1 == 0)
-		{
-			t2 = clock() - t1;
-			f = ((float)t2 / CLOCKS_PER_SEC);
-			filtration();
-		}
-	}
-	t1 = clock() - t1;
-	printf("Time taken: %f seconds\n", ((float)t1)/CLOCKS_PER_SEC);
-	printf("Iterations completed: %d\n", i);
-}
-
-void SimpleGA::run()
-{
-	printf("Starting simple genetic algorithm\n");
-	// Generate initial population
-	generatePopulation();
-	evaluatePopulation();
-	// Loop
-	stepGA();
-	// End
-	printf("Ending simple genetic algorithm\n");
-}
-
 void SimpleGA::start()
 {
 	// Generate initial population
@@ -195,17 +156,11 @@ void SimpleGA::start()
 	evaluatePopulation();
 }
 
-void SimpleGA::step(int n)
+void SimpleGA::step()
 {
-	for (int i = 0; i < n; i++)
-	{
-		reproduceOffspring();
-		//t3 = clock() - t3; printf("reproduce %f seconds\n", ((float)t3/CLOCKS_PER_SEC)); t3 = clock();
-		replacePopulation();
-		//t3 = clock() - t3; printf("replace %f seconds\n", ((float)t3/CLOCKS_PER_SEC)); t3 = clock();
-		evaluatePopulation();
-	}
-	filtration();
+	reproduceOffspring();
+	replacePopulation();
+	evaluatePopulation();
 }
 
 // SELECTIONS
@@ -845,7 +800,7 @@ void SimpleGA::split(Chromosome* chromosome, Vehicle* v1, int i)
 {
 	// Split by two or three
 	int p = (float)rand()/RAND_MAX;
-	if (p > 0.5f)
+	if (p < 0.5f)
 	{
 		Vehicle* v2 = new Vehicle(nodes);
 		chromosome->genes.insert(chromosome->genes.begin()+i, v2);
@@ -890,9 +845,9 @@ void SimpleGA::split(Chromosome* chromosome, Vehicle* v1, int i)
 void SimpleGA::repair(Chromosome* chromosome, Chromosome* p1, Chromosome* p2, int ch[], int size)
 {
 	float p = (float)rand() / RAND_MAX;
-	if (p > 0.6f)
+	if (p < 0.6f)
 		greedyRepair(chromosome, ch, size);
-	else if (p > 0.8f)
+	else if (p < 0.8f)
 		randomRepair(chromosome, ch, size);
 	else
 		inheritanceRepair(chromosome, p1, p2, ch);

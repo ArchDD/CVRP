@@ -18,16 +18,14 @@ private:
 	float mutationProbability;
 public:
 	Chromosome* bestSolution;
-	SimpleGA(vector<Node*>* n, int d, int c);
+	SimpleGA(vector<Node*>* n, int d, int c, int p);
 	void generatePopulation();
 	void evaluatePopulation();
 	void reproduceOffspring();
 	void replacePopulation();
-	void stepGA();
 	void filtration();
-	void run();
 	void start();
-	void step(int n);
+	void step();
 
 
 	vector<Chromosome*> rouletteSelection();
