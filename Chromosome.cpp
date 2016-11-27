@@ -26,13 +26,11 @@ Chromosome::Chromosome(Chromosome* chromosome)
 	nodes = chromosome->nodes;
 	dimension = chromosome->dimension;
 	capacity = chromosome->capacity;
-	fitness = chromosome->fitness;
-	probability = chromosome->probability;
 	cost = chromosome->cost;
 
 	for (int i = 0; i < chromosome->genes.size(); i++)
 	{
-		Vehicle* v = new Vehicle();
+		Vehicle* v = new Vehicle(nodes);
 		v->route = chromosome->genes[i]->route;
 		v->load = chromosome->genes[i]->load;
 		genes.push_back(v);
@@ -50,7 +48,7 @@ void Chromosome::initialise()
 		appendSubroute();
 	}
 	if (genes.back()->route.back() != 0)
-			genes.back()->route.push_back(0);
+			genes.back()->push(0);
 	customers.clear();
 	evaluateFitness();
 }
@@ -60,9 +58,8 @@ void Chromosome::createSubroute()
 	// Random integer in range 1 to customer size
 	int i = (rand() % (customers.size()-1)) + 1;
 	int n = customers[i];
-	Vehicle* v = new Vehicle();
-	v->route.push_back(0);
-	v->route.push_back(n);
+	Vehicle* v = new Vehicle(nodes);
+	v->push(n);
 	genes.push_back(v);
 	customers.erase(customers.begin()+i);
 }
@@ -78,15 +75,14 @@ void Chromosome::appendSubroute()
 	int n = customers[j];
 
 	// Update vehicle load then try to fit in last subroute
-	evaluateLoad(genes[i]);
 	if (genes[i]->load + (*nodes)[n]->demand > capacity)
 	{
-		genes[i]->route.push_back(0);
+		genes[i]->push(0);
 		createSubroute();
 	}
 	else
 	{
-		genes[i]->route.push_back(n);
+		genes[i]->push(n);
 		customers.erase(customers.begin()+j);
 		appendSubroute();
 	}
@@ -107,7 +103,6 @@ void Chromosome::evaluateFitness()
 	}
 
 	cost = c;
-	fitness = 100000.0f/cost;
 }
 
 void Chromosome::evaluateLoad(Vehicle* vehicle)
