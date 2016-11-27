@@ -41,7 +41,7 @@ void SimpleGA::evaluatePopulation()
 		}
 	}
 
-	/*// Uncomment for roulette wheel selection
+	/*// Uncomment for roulette wheel selection (add missing variables to chromosome)
 	float totalFitness = 0.0f;
 	for (int i = 0; i < samples; i++)
 	{
@@ -62,7 +62,7 @@ void SimpleGA::reproduceOffspring()
 	// Select parents
 	while(offsprings.size() < samples)
 	{
-		vector<Chromosome*> parents = tournamentSelection(10);
+		vector<Chromosome*> parents = tournamentSelection(8);
 		Chromosome* c1 = parents[0];
 		Chromosome* c2 = parents[1];
 		c1->setArrayRepresentation();
@@ -125,10 +125,16 @@ void SimpleGA::replacePopulation()
 			p = (float)rand() / RAND_MAX;
 			if (p < 0.5f)
 				population.back() = insertionMutation(population.back());
-			else if (p < 0.75f)
+			else if (p < 0.6f)
 				population.back() = inversionMutation(population.back());
-			else
+			else if (p < 0.7f)
 				population.back() = swapMutation(population.back());
+			else if (p < 0.8f)
+				population.back() = splitOrMerge(population.back());
+			else if (p < 0.95f)
+				population.back() = shuffleRoute(population.back());
+			else
+				population.back() = shuffleRoutes(population.back());
 		}
 	}
 }
@@ -137,7 +143,7 @@ void SimpleGA::replacePopulation()
 void SimpleGA::filtration()
 {
 	map <int, int> filtered;
-	while(filtered.size() < samples/10)
+	while(filtered.size() < samples/8)
 	{
 		int s = rand() % samples;
 		if (filtered.count(s) == 0 && population[s] != bestSolution)
@@ -796,6 +802,38 @@ Chromosome* SimpleGA::insertionMutation(Chromosome* ch)
 	return ch;
 }
 
+Chromosome* SimpleGA::shuffleRoute(Chromosome* ch)
+{
+	int i = rand() % ch->genes.size();
+	random_shuffle ( ch->genes[i]->route.begin()+1, ch->genes[i]->route.end()-1);
+	return ch;
+}
+
+Chromosome* SimpleGA::shuffleRoutes(Chromosome* ch)
+{
+	random_shuffle ( ch->genes.begin(), ch->genes.end() );
+	return ch;
+}
+
+Chromosome* SimpleGA::splitOrMerge(Chromosome* ch)
+{
+	float p = (float)rand()/RAND_MAX;
+	if (p < 0.5)
+	{
+		int i = rand() % ch->genes.size();
+		if (ch->genes[i]->route.size() >= 5)
+			split(ch, ch->genes[i], i);
+	}
+	else
+	{
+		int i = rand() % ch->genes.size();
+		int j = rand() % ch->genes.size();
+		if (i != j)
+			merge(ch, ch->genes[i], i, ch->genes[j], j);
+	}
+	return ch;
+}
+
 void SimpleGA::split(Chromosome* chromosome, Vehicle* v1, int i)
 {
 	// Split by two or three
@@ -838,6 +876,36 @@ void SimpleGA::split(Chromosome* chromosome, Vehicle* v1, int i)
 		v1->push(0);
 		v2->push(0);
 		v3->push(0);
+	}
+}
+
+void SimpleGA::merge(Chromosome* chromosome, Vehicle* v1, int i, Vehicle* v2, int j)
+{
+	if (v1->load + v2->load <= capacity)
+	{
+		Vehicle *v3, *v4;
+		float p = (float)rand()/RAND_MAX;
+		int pos;
+		if (p < 0.5f)
+		{
+			v3 = v1;
+			v4 = v2;
+			pos = j;
+		}
+		else
+		{
+			v3 = v2;
+			v4 = v1;
+			pos = i;
+		}
+
+		v3->pop();
+		for (int k = 1; k < v4->route.size(); k++)
+		{
+			v3->push(v4->route[k]);
+		}
+		chromosome->genes.erase(chromosome->genes.begin() + pos);
+		delete(v4);
 	}
 }
 

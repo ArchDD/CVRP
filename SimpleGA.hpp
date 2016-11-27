@@ -43,9 +43,11 @@ public:
 	Chromosome* swapMutation(Chromosome* ch);
 	Chromosome* inversionMutation(Chromosome* ch);
 	Chromosome* insertionMutation(Chromosome* ch);
-	Chromosome* shuffleMutation(Chromosome* ch);
-	Chromosome* splitMutation(Chromosome* ch);
+	Chromosome* shuffleRoute(Chromosome* ch);
+	Chromosome* shuffleRoutes(Chromosome* ch);
+	Chromosome* splitOrMerge(Chromosome* ch);
 	void split(Chromosome* chromosome, Vehicle* v1, int i);
+	void merge(Chromosome* chromosome, Vehicle* v1, int i, Vehicle* v2, int j);
 
 	void repair(Chromosome* chromosome, Chromosome* p1, Chromosome* p2, int ch[], int size);
 	void greedyRepair(Chromosome* chromosome, int ch[], int size);
