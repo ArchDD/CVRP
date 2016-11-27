@@ -34,14 +34,14 @@ public:
 	vector<Chromosome*> rouletteSelection();
 	vector<Chromosome*> tournamentSelection(int n);
 	void pmx(Chromosome* p1, Chromosome* p2);
-	void swapGenes(int g1, int g2, int chromosome[]);
 	void vrpCrossover(Chromosome* p1, Chromosome* p2);
 	void scx(Chromosome* p1, Chromosome* p2);
 	void ox(Chromosome* p1, Chromosome* p2);
-	void fillNodes(int chromosome[], int parent[], int size, map<int, int>* existing);
 	void pb(Chromosome* p1, Chromosome* p2);
 	void ob(Chromosome* p1, Chromosome* p2);
 	void cx(Chromosome* p1, Chromosome* p2);
+	void swapGenes(int g1, int g2, int chromosome[]);
+	void fillNodes(int chromosome[], int parent[], int size, map<int, int>* existing);
 
 	Chromosome* swapMutation(Chromosome* ch);
 	Chromosome* inversionMutation(Chromosome* ch);
@@ -49,7 +49,8 @@ public:
 	Chromosome* shuffleMutation(Chromosome* ch);
 	Chromosome* splitMutation(Chromosome* ch);
 
-	void repair(Chromosome* chromosome, int ch[], int size);
-	void naiveRepair(Chromosome* chromosome, int ch[], int size);
-	void inheritanceRepair(Chromosome* chromosome, int ch[], int size);
+	void repair(Chromosome* chromosome, Chromosome* p1, Chromosome* p2, int ch[], int size);
+	void greedyRepair(Chromosome* chromosome, int ch[], int size);
+	void inheritanceRepair(Chromosome* chromosome, Chromosome* p1, Chromosome* p2, int ch[]);
+	void randomRepair(Chromosome* chromosome, int ch[], int size);
 };
