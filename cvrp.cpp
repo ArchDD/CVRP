@@ -85,10 +85,49 @@ void preprocess()
 			float distanceSquared = (x*x + y*y)*1.0;
 			float distance = sqrt(distanceSquared);
 			nodes[i]->distances[j] = distance;
+			if (nodes[i]->closest == -1 && i != j)
+				nodes[i]->closest = j;
+			else if (nodes[i]->distances[j] < nodes[i]->distances[nodes[i]->closest] && i != j)
+				nodes[i]->closest = j;
 		}
 	}
 
 	printf("Ending preprocessing stage\n\n");
+}
+
+void postprocess()
+{
+	printf("\nBegin post-processing stage\n");
+	printf("Cost before:\t\t\t\t%.3f\n", bestSolution->evaluatePreciseCost());
+
+	double tic, toc, timeLimit = 30.0f;
+	struct timeval timstr;
+	gettimeofday(&timstr,NULL);
+	tic = timstr.tv_sec+(timstr.tv_usec/1000000.0);
+
+	#pragma omp parallel for schedule(auto)
+	for (int i = 0; i < bestSolution->genes.size(); i++)
+	{
+		Vehicle v = Vehicle(bestSolution->genes[i]);
+		float c1 = bestSolution->evaluateCost(bestSolution->genes[i]);
+		while( next_permutation(v.route.begin()+1, v.route.end()-1) && toc-tic < timeLimit)
+		{
+			float c2 = bestSolution->evaluateCost(&v);
+			if (c2 < c1)
+			{
+				bestSolution->genes[i]->route = v.route;
+				c1 = bestSolution->evaluateCost(bestSolution->genes[i]);
+			}
+			gettimeofday(&timstr,NULL);
+			toc = timstr.tv_sec+(timstr.tv_usec/1000000.0);
+		}
+	}
+	
+	if (toc-tic >= timeLimit)
+		printf("Time limit exceeded.\n");
+
+	printf("Cost after:\t\t\t\t%.3f\n", bestSolution->evaluatePreciseCost());
+	printf("Ending post-processing stage\n\n");
 }
 
 void writeResult()
@@ -168,12 +207,11 @@ int main()
 	}
 
 	printf("Parallel processing...\n");
-	double timeLimit = 1.0 * 60.0, t = 0.0;
+	double timeLimit = 119.0 * 60.0, t = 0.0, timed = 60.0;
 	int iterations = 0, steps = 100;
 
 	while(t < timeLimit)
 	{
-		//#pragma omp parallel for
 		#pragma omp parallel for schedule(auto)
 		for (int i = 0; i < n; i++)
 		{
@@ -188,6 +226,11 @@ int main()
 		gettimeofday(&timstr,NULL);
 		toc = timstr.tv_sec+(timstr.tv_usec/1000000.0);
 		t = toc-tic;
+		if (t > timed)
+		{
+			printf("%.0f minute has passed.\n", t/60.0);
+			timed+=60.0;
+		}
 	}
 
 	for (int i = 0; i < n; i++)
@@ -199,6 +242,9 @@ int main()
 		}
 		simpleGA[i]->free();
 	}
+	printf("End genetic algorithms.\n");
+
+	postprocess();
 	
 	gettimeofday(&timstr,NULL);
 	toc = timstr.tv_sec+(timstr.tv_usec/1000000.0);

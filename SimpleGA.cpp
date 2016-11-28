@@ -772,9 +772,30 @@ Chromosome* SimpleGA::insertionMutation(Chromosome* ch)
 				}
 			}
 		}
-	}	
+	}
 	int pos = (rand() % dimension-1) + 1;
+	// Pick random or go to closest node
+	float p = (float)rand()/RAND_MAX;
 	int c = 0;
+	if (p < 0.05f)
+	{
+		Node* n = (*nodes)[cus];
+		for (int i = 0; i < mutation->genes.size(); i++)
+		{
+			Vehicle *v = mutation->genes[i];
+			for (int j = 1; j < v->route.size()-1; j++)
+			{
+				if (v->route[j] == n->closest)
+				{
+					// Insert to front or back
+					pos = c + (rand() % 2);
+				}
+			}
+			c+=1;
+		}
+	}
+
+	c = 0;
 	Vehicle *v;
 	for (int i = 0; i < mutation->genes.size(); i++)
 	{

@@ -6,7 +6,7 @@ class Node
 {
 public:
 	int x, y, demand;
-	//vector<Node*> closest;
+	int closest;
 	float *distances;
 	Node();
 };
@@ -84,9 +84,8 @@ public:
 	void createSubroute();
 	void appendSubroute();
 	void evaluateFitness();
+	float evaluateCost(Vehicle* v);
 	double evaluatePreciseCost();
-	void evaluateProbability();
-	void evaluateLoad(Vehicle* vehicle);
 	void setArrayRepresentation();
 	void free();
 };

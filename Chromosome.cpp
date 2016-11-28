@@ -9,6 +9,7 @@
 Node::Node()
 { 
 	distances = (float*)malloc(sizeof(float) * 250);
+	closest = -1;
 }
 
 Chromosome::Chromosome(vector<Node*>* n, int d, int c, bool init)
@@ -91,28 +92,19 @@ void Chromosome::evaluateFitness()
 	float c = 0.0f;
 	// Evaluate through each vehicle
 	for (int i = 0; i < genes.size(); i++)
-	{
-		Vehicle* v = genes[i];
-		// Retrieve node value from route
-		for (int j = 0; j < v->route.size()-1; j++)
-		{
-			c += (*nodes)[v->route[j]] -> distances[v->route[j+1]];
-		}
-	}
-
+		c += evaluateCost(genes[i]);
 	cost = c;
 }
 
-void Chromosome::evaluateLoad(Vehicle* vehicle)
+float Chromosome::evaluateCost(Vehicle* v)
 {
-	int load = 0;
-	if (vehicle->route.size() <= 2) vehicle->load = 0;
-	for (int i = 0; i < vehicle->route.size(); i++)
+	float c = 0.0f;
+	if (v->route.size() <= 2) return cost;
+	for (int i = 0; i < v->route.size()-1; i++)
 	{
-		int n = vehicle->route[i];
-		load += (*nodes)[n]->demand;
+		c += (*nodes)[v->route[i]] -> distances[v->route[i+1]];
 	}
-	vehicle->load = load;
+	return c;
 }
 
 double Chromosome::evaluatePreciseCost()
