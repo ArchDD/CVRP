@@ -122,8 +122,8 @@ void postprocess()
 			toc = timstr.tv_sec+(timstr.tv_usec/1000000.0);
 		}
 	}
-	
-	if (toc-tic >= timeLimit)
+
+	if (toc-tic >= timeLimit*0.99)
 		printf("Time limit exceeded.\n");
 
 	printf("Cost after:\t\t\t\t%.3f\n", bestSolution->evaluatePreciseCost());
@@ -207,7 +207,7 @@ int main()
 	}
 
 	printf("Parallel processing...\n");
-	double timeLimit = 119.0 * 60.0, t = 0.0, timed = 60.0;
+	double timeLimit = 29.0 * 60.0, t = 0.0, timed = 60.0;
 	int iterations = 0, steps = 100;
 
 	while(t < timeLimit)
@@ -230,6 +230,7 @@ int main()
 		{
 			printf("%.0f minute has passed.\n", t/60.0);
 			timed+=60.0;
+			printf("Current cost:\t\t\t\t%.3f\n", simpleGA[0]->bestSolution->cost);
 		}
 	}
 
@@ -242,6 +243,7 @@ int main()
 		}
 		simpleGA[i]->free();
 	}
+
 	printf("End genetic algorithms.\n");
 
 	postprocess();

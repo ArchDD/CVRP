@@ -940,7 +940,6 @@ void SimpleGA::repair(Chromosome* chromosome, Chromosome* p1, Chromosome* p2, in
 		randomRepair(chromosome, ch, size);
 	else
 		inheritanceRepair(chromosome, p1, p2, ch);
-	//greedyRepair(chromosome, ch, size);
 }
 
 void SimpleGA::greedyRepair(Chromosome* chromosome, int ch[], int size)
