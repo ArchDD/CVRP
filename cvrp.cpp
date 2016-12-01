@@ -217,7 +217,7 @@ int main()
 		{
 			for (int j = 0; j < steps; j++)
 				simpleGA[i]->step();
-			if (iterations % (steps*5) == 0)
+			if (iterations % (steps*3) == 0)
 				simpleGA[i]->filtration();
 		}
 
@@ -234,6 +234,9 @@ int main()
 		}
 	}
 
+	printf("End genetic algorithms.\n");
+	printf("Selecting best solution from instances.\n");
+
 	for (int i = 0; i < n; i++)
 	{
 		if (simpleGA[i]->bestSolution->cost < bestSolution->cost)
@@ -243,8 +246,6 @@ int main()
 		}
 		simpleGA[i]->free();
 	}
-
-	printf("End genetic algorithms.\n");
 
 	postprocess();
 	
