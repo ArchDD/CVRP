@@ -123,13 +123,13 @@ void SimpleGA::replacePopulation()
 		if (p < mutationProbability && population.back() != bestSolution)
 		{
 			p = (float)rand() / RAND_MAX;
-			if (p < 0.5f)
+			if (p < 0.6f)
 				population.back() = insertionMutation(population.back());
-			else if (p < 0.6f)
-				population.back() = inversionMutation(population.back());
 			else if (p < 0.7f)
-				population.back() = swapMutation(population.back());
+				population.back() = inversionMutation(population.back());
 			else if (p < 0.8f)
+				population.back() = swapMutation(population.back());
+			else if (p < 0.9f)
 				population.back() = splitOrMerge(population.back());
 			else if (p < 0.95f)
 				population.back() = shuffleRoute(population.back());
